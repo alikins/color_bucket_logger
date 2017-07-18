@@ -78,10 +78,13 @@ def test_get_name_color():
 
 def test_stuff():
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                              fmt='%(levelname)s %(created)s %(filename)s %(funcName)s %(levelno)s %(module)s %(pathname)s %(process)d %(thread)d %(name)s %(message)s')
+                                              fmt='%(levelname)s %(created)s %(filename)s %(funcName)s ' +
+                                              '%(levelno)s %(module)s %(pathname)s %(process)d ' +
+                                              '%(thread)d %(name)s %(message)s')
 
     slogger, shandler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                               fmt='%(levelname)s %(filename)s %(process)d %(thread)d %(name)s %(message)s')
+                                                fmt='%(levelname)s %(filename)s %(process)d' +
+                                                '%(thread)d %(name)s %(message)s')
 
     logger.debug('D: %s', '_debug')
     logger.info('I: %s', '_info')
