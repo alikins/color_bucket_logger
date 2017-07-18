@@ -219,11 +219,6 @@ class ColorFormatter(logging.Formatter):
 
         self._format_attrs = find_format_attrs(self._base_fmt)
 
-        self.thread_counter = 0
-        self.use_thread_color = False
-        self.use_level_color = True
-        # self.use_name_color = True
-        self.use_name_color = False
         self.color_groups = color_groups or []
 
         # self.group_by = [('default', ['default', 'message', 'unset'])]
