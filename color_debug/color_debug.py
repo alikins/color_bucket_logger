@@ -211,11 +211,10 @@ class ColorFormatter(logging.Formatter):
         self._base_fmt = value
         self._color_fmt = None
 
-    def __init__(self, fmt=None, use_color=True, default_color_by_attr=None, color_groups=None):
+    def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
         fmt = fmt or self.FORMAT
         logging.Formatter.__init__(self, fmt)
         self._base_fmt = fmt
-        self.use_color = use_color
 
         self._format_attrs = find_format_attrs(self._base_fmt)
 
@@ -436,7 +435,7 @@ def _get_handler():
     # fmt = u'\033[33m**: tname:%(threadName)s @%(filename)s:%(lineno)d - %(message)s\033[0m'
     # fmt = u': tname:%(threadName)s @%(filename)s:%(lineno)d - %(message)s'
     handler = logging.StreamHandler()
-    handler.setFormatter(ColorFormatter(use_color=True))
+    handler.setFormatter(ColorFormatter())
     # handler.setFormatter(logging.Formatter(fmt))
     handler.setLevel(logging.DEBUG)
 
