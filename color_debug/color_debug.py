@@ -34,7 +34,7 @@ def context_color_format_string(format_string, format_attrs):
 
     Note that adding those log record attributes is left to... <FIXME>.
     '''
-
+    print('ccfs')
     format_attrs = find_format_attrs(format_string)
     # TODO: pass in a list of record/logFormatter attributes to be wrapped for colorization
 
@@ -201,20 +201,21 @@ class ColorFormatter(logging.Formatter):
 
     # A little weird...
     @property
-    def _fmt(self):
+    def color_fmt(self):
         if not self._color_fmt:
             self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
         return self._color_fmt
 
-    @_fmt.setter
-    def _fmt(self, value):
-        self._base_fmt = value
-        self._color_fmt = None
+    # @_fmt.setter
+    # def _fmt(self, value):
+    #    self._base_fmt = value
+    #    self._color_fmt = None
 
     def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
         fmt = fmt or self.FORMAT
         logging.Formatter.__init__(self, fmt)
         self._base_fmt = fmt
+        self._color_fmt = None
 
         self._format_attrs = find_format_attrs(self._base_fmt)
 
@@ -425,8 +426,7 @@ class ColorFormatter(logging.Formatter):
     # just appends the exception string from formatException() to the formatted message.
     def _format(self, record):
         record.message = record.getMessage()
-        s = self._fmt % record.__dict__
-        # s = s + record.exc_text_sep + record.exc_text
+        s = self.color_fmt % record.__dict__
         return s
 
 
