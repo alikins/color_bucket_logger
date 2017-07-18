@@ -76,6 +76,24 @@ def test_get_name_color():
         assert hasattr(record, '_cdl_name')
 
 
+def test_stuff():
+    logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
+                                              fmt='%(levelname)s %(created)s %(filename)s %(funcName)s %(levelno)s %(module)s %(pathname)s %(process)d %(thread)d %(name)s %(message)s')
+
+    slogger, shandler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
+                                               fmt='%(levelname)s %(filename)s %(process)d %(thread)d %(name)s %(message)s')
+
+    logger.debug('D: %s', '_debug')
+    logger.info('I: %s', '_info')
+    logger.warning('W: %s', '_warn')
+    slogger.debug('foo1')
+    slogger.info('foo2')
+    slogger.error('foo4')
+
+    for record in handler.record_buf:
+        print(record.message)
+
+
 def test_init(response):
     """Just init the class"""
     formatter = color_debug.ColorFormatter()
