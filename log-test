@@ -1,0 +1,102 @@
+#!/usr/bin/python
+
+import logging
+
+import random
+import string
+import sys
+
+import color_debug
+from color_debug import other_module
+
+log = logging.getLogger('color_debug')
+log.setLevel(logging.DEBUG)
+
+
+LOG_LEVELS = [(logging.DEBUG, 'DEBUG'),
+              (logging.INFO, 'INFO'),
+              (logging.WARNING, 'WARNING'),
+              (logging.ERROR, 'ERROR'),
+              (logging.CRITICAL, 'CRITICAL')]
+
+
+class DefaultAttrFilter(object):
+    def __init__(self, name=None, attrs=None):
+        self.name = name
+        self.attrs = attrs
+
+    def filter(self, record):
+        color_debug.add_default_record_attrs(record, self.attrs)
+        return True
+
+
+def setup_logger(color_groups=None, fmt=None):
+    color_groups = color_groups or [('name', ['name', 'levelname'])]
+    fmt = fmt or '%(levelname)s %(name)s %(message)s'
+    formatter = color_debug.ColorFormatter(fmt=fmt,
+                                           default_color_by_attr='name',
+                                           color_groups=color_groups)
+
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+    handler.addFilter(DefaultAttrFilter(name="", attrs=['record']))
+    log.addHandler(handler)
+
+    return log, handler, formatter
+
+
+def gen_loggers(base_logger_name):
+    xs = string.uppercase
+    ys = string.lowercase
+    zs = string.digits
+    x_size = 2
+    y_size = 2
+    z_size = 2
+
+    for x in [''] + list(xs[0:x_size]):
+        for y in [''] + list(ys[0:y_size]):
+            for z in [''] + list(zs[0:z_size]):
+                r = [base_logger_name] + [a for a in [x, y, z] if a]
+                # print('r: %s' % r)
+                name = '.'.join(r)
+                # print('name: %s' % name)
+                yield name
+
+
+def func1(logger, level, **kwargs):
+
+    extra = {'random': random.randint(0, 7),
+             'other': 'i like cheese'}
+    extra.update(kwargs)
+    logger.log(level, 'foo blip:', extra=extra)
+
+
+def func2(logger, level, **kwargs):
+    logger.log(level, 'blip bax: %s', 'bar')
+
+def gen_log_events():
+    for name in gen_loggers('color_debug'):
+        logger = logging.getLogger(name)
+        for level, levelname in LOG_LEVELS:
+            func1(logger, level)
+            func2(logger, level, blip='1212312')
+            other_module.func3()
+
+
+def main(args):
+    color_groups = [('name', ['name', 'levelname']),
+                    ('levelname', ['levelname'])]
+    #fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
+    fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(message)s'
+
+    logger, handler, formatter = setup_logger(color_groups, fmt)
+
+    import logging_tree
+    logging_tree.printout()
+    gen_log_events()
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[:]))
