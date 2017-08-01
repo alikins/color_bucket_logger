@@ -85,6 +85,13 @@ def context_color_format_string(format_string, format_attrs):
     return format_string
 
 
+def add_default_record_attrs(record, attr_list):
+    for attr in attr_list:
+        if not hasattr(record, attr):
+            setattr(record, attr, None)
+    return record
+
+
 RGB_COLOR_OFFSET = 16
 
 
