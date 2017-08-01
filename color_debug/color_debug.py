@@ -1,6 +1,7 @@
 import logging
 import re
 
+
 # import sys
 
 # from ansible.logger import levels
@@ -12,7 +13,6 @@ import re
 
 # TODO: add a Filter or LoggingAdapter that adds a record attribute for parent pid
 #       (and maybe thread group/process group/cgroup ?)
-
 
 def find_format_attrs(format_string):
     attrs_re_string = r"(?P<full_attr>%\((?P<attr_name>" + r'.*' + r"?)\).*?[dsf])"
@@ -34,7 +34,6 @@ def context_color_format_string(format_string, format_attrs):
 
     Note that adding those log record attributes is left to... <FIXME>.
     '''
-    print('ccfs')
     format_attrs = find_format_attrs(format_string)
     # TODO: pass in a list of record/logFormatter attributes to be wrapped for colorization
 
@@ -317,7 +316,10 @@ class ColorFormatter(logging.Formatter):
     #       so that the entire blurb about process info matches instead of just the attribute
     #       - also allows format to just expand a '%(threadName)s' in fmt string to '%(theadNameColor)s%(threadName)s%(reset)s' before regular formatter
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
-    def format(self, record):
+    def add_color_attrs_to_record(self, record):
+        '''Add _cdl_* color attributes to LogRecord
+
+        Note: record is modified in place as a side effect.'''
 
         _default_color_index = self.DEFAULT_COLOR_IDX
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
@@ -416,6 +418,8 @@ class ColorFormatter(logging.Formatter):
 
             setattr(record, cdl_name, self.ALL_COLORS[cdl_idx])
 
+    def format(self, record):
+        self.add_color_attrs_to_record(record)
         # pprint.pprint(colors)
         s = self._format(record)
         s = s + record.exc_text
