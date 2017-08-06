@@ -18,23 +18,28 @@ color_debug
      :alt: Updates
 
 
-color_debug_desc
+Python logging Formatter for colorizing logs per thread, process, logger name, or any record attribute
 
+Using this logging formatter to make log records that share a common attribute share a color
+automatically.
+
+For example, a process with three threads could show the log entries for each thread in a different
+color. The same can be done per process, or per logger name. Any log record attribute can be used
+to choose the color used for the log entry.
+
+The entire log record, the particular log field ('level' or 'process' for ex.), or a group of
+fields can be colorized based on an attribute value.
+
+For example, the fields for 'thread', 'threadName', 'process', 'processName' could be colorized
+based on the thread id.
+
+License
+-------
 
 * Free software: MIT license
-* Documentation: https://color-debug.readthedocs.io.
 
 
 Features
 --------
 
 * TODO
-
-Credits
----------
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
-
