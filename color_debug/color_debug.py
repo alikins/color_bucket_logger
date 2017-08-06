@@ -1,18 +1,31 @@
 import logging
 import re
 
-
-# import sys
-
-# from ansible.logger import levels
-# import this module to dump colories DEBUG level logging on stdout
-#
-# includes thread info by default, so can be useful for some
-# quick thread debugging (hahaha...)
-#
-
 # TODO: add a Filter or LoggingAdapter that adds a record attribute for parent pid
 #       (and maybe thread group/process group/cgroup ?)
+
+DEFAULT_FORMAT = ("""%(asctime)-15s"""
+                  """ %(levelname)-0.1s"""
+                  # If log records are coming from multiproceses into a single handler (say, via a multiprocess queue
+                  # based handler), it is useful to see the process info with a different color per process.
+                  # Assume we only need 3 digits for worker process number, if you see this wrap, but the '-4s' below
+                  # to '-5s'. This is fixed width just to make the results easier to read for the normal case
+                  # (everything before 'name' should be the same width for each log item show...)
+                  """ %(processName)-4s %(_cdl_process)spid=%(process)-5d%(_cdl_unset)s"""
+                  # truncate thread name to 2 chars, we use 2char names or the process filter does MainThread/MT elsewhere
+                  """ %(threadName)-2s"""
+                  # """ %(thread)d"""
+                  # """[tid: \033[32m%(thread)d$RESET tname:\033[32m%(threadName)s]$RESET """
+                  """ %(name)s"""
+                  """ """
+                  """%(funcName)s"""
+                  """ """
+                  """%(filename)s"""
+                  """ """
+                  """%(lineno)d"""
+                  """ - %(message)s"""
+                  """%(_cdl_reset)s""")
+
 
 def find_format_attrs(format_string):
     attrs_re_string = r"(?P<full_attr>%\((?P<attr_name>" + r'.*' + r"?)\).*?[dsf])"
@@ -96,29 +109,6 @@ RGB_COLOR_OFFSET = 16
 
 
 class ColorFormatter(logging.Formatter):
-    FORMAT = ("""%(asctime)-15s"""
-              #              """ %(relativeCreated)-8d"""
-              """ %(levelname)-0.1s"""
-              #              """\033[1;35m%(name)s$RESET """
-              #              """%(processName)s """
-              # assume we only need 3 digits for worker process number, if you see this wrap, but the '-4s' below
-              # to '-5s'. This is fixed width just to make the results easier to read for the normal case
-              # (everything before 'name' should be the same width for each log item show...)
-              """ %(processName)-4s %(_cdl_process)spid=%(process)-5d%(_cdl_unset)s"""
-              # """ %(ppid)-5s"""
-              # truncate thread name to 2 chars, we use 2char names or the process filter does MainThread/MT elsewhere
-              """ %(threadName)-2s"""
-              # """ %(thread)d"""
-              # """[tid: \033[32m%(thread)d$RESET tname:\033[32m%(threadName)s]$RESET """
-              """ %(name)s"""
-              """ """
-              """%(funcName)s"""
-              """ """
-              """%(filename)s"""
-              """ """
-              """%(lineno)d"""
-              """ - %(message)s"""
-              """%(_cdl_reset)s""")
 
     default_record_attrs = ['args', 'asctime', 'created', 'exc_info', 'filename',
                             'funcName', 'levelname', 'levelno', 'lineno', 'module',
@@ -218,7 +208,7 @@ class ColorFormatter(logging.Formatter):
     #    self._color_fmt = None
 
     def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
-        fmt = fmt or self.FORMAT
+        fmt = fmt or DEFAULT_FORMAT
         logging.Formatter.__init__(self, fmt)
         self._base_fmt = fmt
         self._color_fmt = None
