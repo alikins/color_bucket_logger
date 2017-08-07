@@ -5,6 +5,8 @@ import logging
 import random
 import string
 import sys
+import threading
+import time
 
 import color_debug
 from color_debug import other_module
@@ -30,29 +32,35 @@ class DefaultAttrFilter(object):
         return True
 
 
-def setup_logger(color_groups=None, fmt=None):
+def _formatter(color_groups=None, fmt=None, default_color_by_attr=None):
     color_groups = color_groups or [('name', ['name', 'levelname'])]
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
+    default_color_by_attr = default_color_by_attr or 'name'
     formatter = color_debug.ColorFormatter(fmt=fmt,
-                                           default_color_by_attr='name',
+                                           default_color_by_attr=default_color_by_attr,
                                            color_groups=color_groups)
 
+    return formatter
+
+
+def setup_logger(formatter):
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
+
     handler.addFilter(DefaultAttrFilter(name="", attrs=['record']))
     log.addHandler(handler)
 
-    return log, handler, formatter
+    return log, handler
 
 
 def gen_loggers(base_logger_name):
     xs = string.uppercase
     ys = string.lowercase
     zs = string.digits
-    x_size = 2
-    y_size = 2
-    z_size = 2
+    x_size = 1
+    y_size = 1
+    z_size = 1
 
     for x in [''] + list(xs[0:x_size]):
         for y in [''] + list(ys[0:y_size]):
@@ -75,26 +83,65 @@ def func1(logger, level, **kwargs):
 def func2(logger, level, **kwargs):
     logger.log(level, 'blip bax: %s', 'bar')
 
-def gen_log_events():
+
+def gen_log_events(msg, sleep):
+    loggers = []
     for name in gen_loggers('color_debug'):
-        logger = logging.getLogger(name)
+        _logger = logging.getLogger(name)
+        loggers.append(_logger)
+
+    for logger in loggers:
+        time.sleep(sleep)
         for level, levelname in LOG_LEVELS:
             func1(logger, level)
+        for level, levelname in LOG_LEVELS:
             func2(logger, level, blip='1212312')
-            other_module.func3()
+            logger.log(level, msg)
+    other_module.func3()
+
+
+def _gen_log_events(handler):
+    gen_log_events()
+    fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
+
+    color_groups2 = [('funcName', ['message', 'module', 'name']),
+                     ('levelname', ['levelname'])]
+    formatter = _formatter(color_groups2, fmt,
+                           default_color_by_attr='funcName')
+    handler.setFormatter(formatter)
+    gen_log_events()
+
 
 
 def main(args):
-    color_groups = [('name', ['name', 'levelname']),
-                    ('levelname', ['levelname'])]
-    #fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
-    fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(message)s'
+    color_groups = [('threadName', ['process', 'processName', 'thread', 'message', 'default']),
+                    #('name', ['name', 'levelname']),
+                    ('levelname', ['levelno'])]
+    # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
+    fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
+    fmt_all = '%(asctime)s %(levelname)-0.1s %(levelno)-0.1d %(processName)-0.1s %(process)d %(threadName)s %(thread)d %(name)s %(module)s %(filename)s %(lineno)d - %(message)s'
 
-    logger, handler, formatter = setup_logger(color_groups, fmt)
+    formatter = _formatter(color_groups, fmt_all, default_color_by_attr='threadName')
+    logger, handler = setup_logger(formatter)
 
     import logging_tree
     logging_tree.printout()
-    gen_log_events()
+
+    threads = []
+
+    main_thread = threading.currentThread()
+
+    for i in range(5):
+        t = threading.Thread(target=gen_log_events, name='T%s' % i,
+                             args=('msg from thread #%s' % i, i))
+        threads.append(t)
+        t.start()
+
+    for t in threading.enumerate():
+        if t is main_thread:
+            continue
+        #logging.debug('joining %s', t.getName())
+        t.join()
     return 0
 
 
