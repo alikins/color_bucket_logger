@@ -6,6 +6,13 @@
 import pytest
 
 import logging
+try:
+    from logging import NullHandler
+except ImportError:
+    # no NullHandler on py2.6, so use our own
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 
 from color_debug import color_debug
 
@@ -104,6 +111,6 @@ def test_init(response):
 
 
 def test_null_handler(response):
-    nh = logging.NullHandler()
+    nh = NullHandler()
     formatter = color_debug.ColorFormatter()
     nh.setFormatter(formatter)
