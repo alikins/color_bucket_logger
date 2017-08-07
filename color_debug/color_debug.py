@@ -308,6 +308,19 @@ class ColorFormatter(logging.Formatter):
 
         return pname_color, pid_color, tname_color, tid_color
 
+    def _pre_format(self, record):
+        '''render time and exception info to be a string
+
+        Modifies record by side effect.'''
+        if self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+
+        record.exc_text_sep = ''
+        record.exc_text = ''
+        if record.exc_info and not record.exc_text:
+            record.exc_text = self.formatException(record.exc_info)
+            record.exc_text_sep = '\n'
+
     # TODO: maybe add a Filter that sets a record attribute for process/pid/thread/tid color that formatter would use
     #       (that would let formatter string do '%(theadNameColor)s tname=%(threadName)s %(reset)s %(processColor)s pid=%(process)d%(reset)s'
     #       so that the entire blurb about process info matches instead of just the attribute
@@ -323,14 +336,7 @@ class ColorFormatter(logging.Formatter):
         # record._cdl_reset = self.RESET_SEQ
         # record._cdl_default = self.default_color
         # record._cdl_unset = self.default_color
-        if self.usesTime():
-            record.asctime = self.formatTime(record, self.datefmt)
-
-        record.exc_text_sep = ''
-        record.exc_text = ''
-        if record.exc_info and not record.exc_text:
-            record.exc_text = self.formatException(record.exc_info)
-            record.exc_text_sep = '\n'
+        # self._pre_format(record)
 
         colors = {'_cdl_default': _default_color_index,
                   '_cdl_unset': _default_color_index,
@@ -416,6 +422,7 @@ class ColorFormatter(logging.Formatter):
             setattr(record, cdl_name, self.ALL_COLORS[cdl_idx])
 
     def format(self, record):
+        self._pre_format(record)
         self.add_color_attrs_to_record(record)
         # pprint.pprint(colors)
         s = self._format(record)
