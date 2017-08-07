@@ -106,18 +106,99 @@ def add_default_record_attrs(record, attr_list):
 
 
 RGB_COLOR_OFFSET = 16
+DEFAULT_COLOR_BY_ATTR = 'process'
 
 
-class ColorFormatter(logging.Formatter):
-
-    default_record_attrs = ['args', 'asctime', 'created', 'exc_info', 'filename',
-                            'funcName', 'levelname', 'levelno', 'lineno', 'module',
-                            'msecs', 'message', 'msg', 'name', 'pathname', 'process',
-                            'processName', 'relativeCreated', 'thread', 'threadName']
-    custom_record_attrs = ['exc_text']
-
+class BaseColorMapper(object):
+    # default_color_groups is:
+    #  ('attr', list_of_attrs_to_use 'attr''s color
+    default_color_groups = [
+        # color almost everything by logger name
+        ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname'])]
     custom_attrs = ['levelname', 'levelno', 'process', 'processName', 'thread', 'threadName']
     high_cardinality = set(['asctime', 'created', 'msecs', 'relativeCreated', 'args', 'message'])
+
+    def __init__(self, fmt=None, default_color_by_attr=None,
+                 color_groups=None, format_attrs=None):
+        self._fmt = fmt
+        self.color_groups = color_groups or []
+
+        self.group_by = self.default_color_groups[:]
+        self.group_by.extend(self.color_groups)
+
+        self.default_color_by_attr = default_color_by_attr or DEFAULT_COLOR_BY_ATTR
+        self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
+
+        self._format_attrs = format_attrs
+
+    def get_thread_color(self, thread_id):
+        '''return color idx for thread_id'''
+        return 0
+
+    def get_name_color(self, name, perturb=None):
+        '''return color idx for 'name' string'''
+        return 0
+
+    def get_level_color(self, levelname, levelno):
+        '''return color idx for logging levelname and levelno'''
+        return 0
+
+    def get_process_colors(self, record):
+        '''return a tuple of pname_color, pid_color, tname_color, tid_color idx for process record'''
+        return 0, 0, 0, 0
+        # return pname_color, pid_color, tname_color, tid_color
+
+    def get_colors_for_attr(self, record):
+        return {}
+
+
+class TermColorMapper(BaseColorMapper):
+    # hacky ansi color stuff
+    RESET_SEQ = "\033[0m"
+    COLOR_SEQ = "\033[1;%dm"
+    BOLD_SEQ = "\033[1m"
+
+    NUMBER_OF_BASE_COLORS = 8
+    # NUMBER_OF_THREAD_COLORS = 216
+    # the xterm256 colors 0-8 and 8-16 are normal and bright term colors, 16-231 is from a 6x6x6 rgb cube
+    # 232-255 are the grays (white to gray to black)
+    RGB_COLOR_OFFSET = 16
+    START_OF_THREAD_COLORS = RGB_COLOR_OFFSET
+    END_OF_THREAD_COLORS = 231
+    NUMBER_OF_THREAD_COLORS = END_OF_THREAD_COLORS - RGB_COLOR_OFFSET
+    BASE_COLORS = dict((color_number, color_seq) for
+                       (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
+    # \ x 1 b [ 38 ; 5; 231m
+    THREAD_COLORS = dict((color_number, color_seq) for
+                         (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
+    ALL_COLORS = {}
+    ALL_COLORS.update(BASE_COLORS)
+    ALL_COLORS.update(THREAD_COLORS)
+
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = BASE_COLORS.keys()
+
+    DEFAULT_COLOR_IDX = 257
+    RESET_SEQ_IDX = 256
+    ALL_COLORS[RESET_SEQ_IDX] = RESET_SEQ
+
+    DEFAULT_COLOR = WHITE
+    ALL_COLORS[DEFAULT_COLOR_IDX] = DEFAULT_COLOR
+
+    # FIXME: use logging.DEBUG etc enums
+    LEVEL_COLORS = {'TRACE': BLUE,
+                    'SUBDEBUG': BLUE,
+                    'DEBUG': BLUE,
+                    # levels.VV: BASE_COLORS[BLUE],
+                    # levels.VVV: BASE_COLORS[BLUE],
+                    # levels.VVVV: BASE_COLORS[BLUE],
+                    # levels.VVVVV: BASE_COLORS[BLUE],
+                    'INFO': GREEN,
+                    # levels.V: BASE_COLORS[GREEN],
+                    'SUBWARNING': YELLOW,
+                    'WARNING': YELLOW,
+                    'ERROR': RED,
+                    # bold red?
+                    'CRITICAL': RED}
 
     default_color_groups = [
         # color almost everything by logger name
@@ -147,92 +228,6 @@ class ColorFormatter(logging.Formatter):
         # ('play', ['default','message', 'unset', 'play', 'task']),
     ]
 
-    # hacky ansi color stuff
-    RESET_SEQ = "\033[0m"
-    COLOR_SEQ = "\033[1;%dm"
-    BOLD_SEQ = "\033[1m"
-    funcName = u""
-    processName = u""
-
-    NUMBER_OF_BASE_COLORS = 8
-    # NUMBER_OF_THREAD_COLORS = 216
-    # the xterm256 colors 0-8 and 8-16 are normal and bright term colors, 16-231 is from a 6x6x6 rgb cube
-    # 232-255 are the grays (white to gray to black)
-    RGB_COLOR_OFFSET = 16
-    START_OF_THREAD_COLORS = RGB_COLOR_OFFSET
-    END_OF_THREAD_COLORS = 231
-    NUMBER_OF_THREAD_COLORS = END_OF_THREAD_COLORS - RGB_COLOR_OFFSET
-    BASE_COLORS = dict((color_number, color_seq) for
-                       (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
-    # \ x 1 b [ 38 ; 5; 231m
-    THREAD_COLORS = dict((color_number, color_seq) for
-                         (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
-    ALL_COLORS = {}
-    ALL_COLORS.update(BASE_COLORS)
-    ALL_COLORS.update(THREAD_COLORS)
-
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = BASE_COLORS.keys()
-
-    DEFAULT_COLOR_IDX = 257
-    RESET_SEQ_IDX = 256
-    ALL_COLORS[RESET_SEQ_IDX] = RESET_SEQ
-
-    DEFAULT_COLOR = WHITE
-
-    # FIXME: use logging.DEBUG etc enums
-    LEVEL_COLORS = {'TRACE': BLUE,
-                    'SUBDEBUG': BLUE,
-                    'DEBUG': BLUE,
-                    # levels.VV: BASE_COLORS[BLUE],
-                    # levels.VVV: BASE_COLORS[BLUE],
-                    # levels.VVVV: BASE_COLORS[BLUE],
-                    # levels.VVVVV: BASE_COLORS[BLUE],
-                    'INFO': GREEN,
-                    # levels.V: BASE_COLORS[GREEN],
-                    'SUBWARNING': YELLOW,
-                    'WARNING': YELLOW,
-                    'ERROR': RED,
-                    # bold red?
-                    'CRITICAL': RED}
-
-    # A little weird...
-    @property
-    def color_fmt(self):
-        if not self._color_fmt:
-            self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
-        return self._color_fmt
-
-    # @_fmt.setter
-    # def _fmt(self, value):
-    #    self._base_fmt = value
-    #    self._color_fmt = None
-
-    def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
-        fmt = fmt or DEFAULT_FORMAT
-        logging.Formatter.__init__(self, fmt)
-        self._base_fmt = fmt
-        self._color_fmt = None
-
-        self._format_attrs = find_format_attrs(self._base_fmt)
-
-        self.color_groups = color_groups or []
-
-        # self.group_by = [('default', ['default', 'message', 'unset'])]
-        self.group_by = self.default_color_groups[:]
-        self.group_by.extend(self.color_groups)
-
-        # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
-        self.default_color_by_attr = default_color_by_attr or 'process'
-        # the name of the record attribute to check for a default color
-        self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
-
-        # self.default_color = self.BASE_COLORS[self.WHITE]
-        # self.default_color = self.BASE_COLORS[self.YELLOW]
-
-        # if self.default_color_by_attr not in [x[1] for x in self.group_by]:
-        #    self.group_by.append((self.default_color_by_attr, ['default']))
-
-    # TODO: rename and generalize
     # TODO: tie tid/threadName and process/processName together so they start same color
     #       so MainProcess, the first pid/processName are same, and maybe MainThread//first tid
     # DOWNSIDE: requires tracking all seen pid/process/tid/threadName ? that could be odd with multi-processes with multi instances
@@ -308,25 +303,13 @@ class ColorFormatter(logging.Formatter):
 
         return pname_color, pid_color, tname_color, tid_color
 
-    def _pre_format(self, record):
-        '''render time and exception info to be a string
-
-        Modifies record by side effect.'''
-        if self.usesTime():
-            record.asctime = self.formatTime(record, self.datefmt)
-
-        record.exc_text_sep = ''
-        record.exc_text = ''
-        if record.exc_info and not record.exc_text:
-            record.exc_text = self.formatException(record.exc_info)
-            record.exc_text_sep = '\n'
-
     # TODO: maybe add a Filter that sets a record attribute for process/pid/thread/tid color that formatter would use
     #       (that would let formatter string do '%(theadNameColor)s tname=%(threadName)s %(reset)s %(processColor)s pid=%(process)d%(reset)s'
     #       so that the entire blurb about process info matches instead of just the attribute
     #       - also allows format to just expand a '%(threadName)s' in fmt string to '%(theadNameColor)s%(threadName)s%(reset)s' before regular formatter
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
-    def add_color_attrs_to_record(self, record):
+    # def add_color_attrs_to_record(self, record):
+    def get_colors_for_record(self, record):
         '''Add _cdl_* color attributes to LogRecord
 
         Note: record is modified in place as a side effect.'''
@@ -401,29 +384,83 @@ class ColorFormatter(logging.Formatter):
                 in_a_group.add(member)
 
         # print('in_a_group: %s' % in_a_group)
-        calc_colors = set()
+        # calc_colors = set()
         for needed_attr in attrs_needed:
             if needed_attr in self.custom_attrs or needed_attr in in_a_group or needed_attr in self.high_cardinality:
                 continue
             colors['_cdl_%s' % needed_attr] = self.get_name_color(getattr(record, needed_attr))
-            calc_colors.add(needed_attr)
+            # calc_colors.add(needed_attr)
 
         # set the default color based on computed values, lookup the color
         # mapped to the attr default_color_by_attr  (ie, if 'process', lookup
         # record._cdl_process and set self.default_color to that value
         _color_by_attr_index = colors[self.default_attr_string]
 
+        name_to_color_map = {}
         for cdl_name, cdl_idx in colors.items():
-            # print('cdl_name: %s cdl_idx: %s' % (cdl_name, cdl_idx))
+            # FIXME: revisit setting default idx to a color based on string
             if cdl_idx == self.DEFAULT_COLOR_IDX:
                 cdl_idx = _color_by_attr_index
-            # print('cdl_name: %s cdl_idx(2): %s' % (cdl_name, cdl_idx))
+            name_to_color_map[cdl_name] = self.ALL_COLORS[cdl_idx]
+        return name_to_color_map
 
-            setattr(record, cdl_name, self.ALL_COLORS[cdl_idx])
+
+class ColorFormatter(logging.Formatter):
+    # A little weird...
+    @property
+    def color_fmt(self):
+        if not self._color_fmt:
+            self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
+        return self._color_fmt
+
+    def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
+        fmt = fmt or DEFAULT_FORMAT
+        logging.Formatter.__init__(self, fmt)
+        self._base_fmt = fmt
+        self._color_fmt = None
+
+        self._format_attrs = find_format_attrs(self._base_fmt)
+
+        self.color_groups = color_groups or []
+
+        # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
+        self.default_color_by_attr = default_color_by_attr or 'process'
+        # the name of the record attribute to check for a default color
+        self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
+
+        self.color_mapper = TermColorMapper(fmt=self._base_fmt,
+                                            default_color_by_attr=self.default_color_by_attr,
+                                            color_groups=self.color_groups,
+                                            format_attrs=self._format_attrs)
+
+    def _pre_format(self, record):
+        '''render time and exception info to be a string
+
+        Modifies record by side effect.'''
+        if self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+
+        record.exc_text_sep = ''
+        record.exc_text = ''
+        if record.exc_info and not record.exc_text:
+            record.exc_text = self.formatException(record.exc_info)
+            record.exc_text_sep = '\n'
 
     def format(self, record):
         self._pre_format(record)
-        self.add_color_attrs_to_record(record)
+        colors = self.color_mapper.get_colors_for_record(record)
+
+        # apply the colors
+        for cdl_name, color_value in colors.items():
+            # print('cdl_name: %s cdl_idx: %s' % (cdl_name, cdl_idx))
+
+            # FIXME: revisit setting default idx to a color based on string
+            # if cdl_idx == self.DEFAULT_COLOR_IDX:
+            #    cdl_idx = _color_by_attr_index
+            # print('cdl_name: %s cdl_idx(2): %s' % (cdl_name, cdl_idx))
+
+            # FIXME:
+            setattr(record, cdl_name, color_value)
         # pprint.pprint(colors)
         s = self._format(record)
         s = s + record.exc_text
