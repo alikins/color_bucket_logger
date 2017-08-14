@@ -278,6 +278,7 @@ class TermColorMapper(BaseColorMapper):
 
             Existing get_*color_ methods attempt to divy up colors by mod 220 on tid/pid, or mod 220 on hash of thread or pid name
             NOTE: This doesn't track any state so there is no ordering or prefence to the colors given out.
+
         '''
         pname, pid, tname, tid = record.processName, record.process, record.threadName, record.thread
         # 'pname' is almost always 'MainProcess' which ends up a ugly yellow. perturb is here to change the color
@@ -310,9 +311,7 @@ class TermColorMapper(BaseColorMapper):
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
     # def add_color_attrs_to_record(self, record):
     def get_colors_for_record(self, record):
-        '''Add _cdl_* color attributes to LogRecord
-
-        Note: record is modified in place as a side effect.'''
+        '''For a log record, compute color for each field and return a color dict'''
 
         _default_color_index = self.DEFAULT_COLOR_IDX
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
@@ -405,6 +404,21 @@ class TermColorMapper(BaseColorMapper):
         return name_to_color_map
 
 
+def _apply_colors_to_record(record, colors):
+    '''modify LogRecord in place (as side effect) adding _cdl_* attributes'''
+    # apply the colors
+    for cdl_name, color_value in colors.items():
+        # print('cdl_name: %s cdl_idx: %s' % (cdl_name, cdl_idx))
+
+        # FIXME: revisit setting default idx to a color based on string
+        # if cdl_idx == self.DEFAULT_COLOR_IDX:
+        #    cdl_idx = _color_by_attr_index
+        # print('cdl_name: %s cdl_idx(2): %s' % (cdl_name, cdl_idx))
+
+        # FIXME:
+        setattr(record, cdl_name, color_value)
+
+
 class ColorFormatter(logging.Formatter):
     # A little weird...
     @property
@@ -449,18 +463,8 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         self._pre_format(record)
         colors = self.color_mapper.get_colors_for_record(record)
+        _apply_colors_to_record(record, colors)
 
-        # apply the colors
-        for cdl_name, color_value in colors.items():
-            # print('cdl_name: %s cdl_idx: %s' % (cdl_name, cdl_idx))
-
-            # FIXME: revisit setting default idx to a color based on string
-            # if cdl_idx == self.DEFAULT_COLOR_IDX:
-            #    cdl_idx = _color_by_attr_index
-            # print('cdl_name: %s cdl_idx(2): %s' % (cdl_name, cdl_idx))
-
-            # FIXME:
-            setattr(record, cdl_name, color_value)
         # pprint.pprint(colors)
         s = self._format(record)
         s = s + record.exc_text

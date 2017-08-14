@@ -112,10 +112,9 @@ def _gen_log_events(handler):
     gen_log_events()
 
 
-
 def main(args):
     color_groups = [('threadName', ['process', 'processName', 'thread', 'message', 'default']),
-                    #('name', ['name', 'levelname']),
+                    # ('name', ['name', 'levelname']),
                     ('levelname', ['levelno'])]
     # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
     fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
@@ -131,16 +130,17 @@ def main(args):
 
     main_thread = threading.currentThread()
 
-    for i in range(5):
+    for i in range(1):
         t = threading.Thread(target=gen_log_events, name='T%s' % i,
                              args=('msg from thread #%s' % i, i))
         threads.append(t)
+        t.daemon = True
         t.start()
 
     for t in threading.enumerate():
         if t is main_thread:
             continue
-        #logging.debug('joining %s', t.getName())
+        # logging.debug('joining %s', t.getName())
         t.join()
     return 0
 
