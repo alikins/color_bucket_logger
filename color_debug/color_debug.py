@@ -11,7 +11,8 @@ DEFAULT_FORMAT = ("""%(asctime)-15s"""
                   # Assume we only need 3 digits for worker process number, if you see this wrap, but the '-4s' below
                   # to '-5s'. This is fixed width just to make the results easier to read for the normal case
                   # (everything before 'name' should be the same width for each log item show...)
-                  """ %(processName)-4s %(_cdl_process)spid=%(process)-5d%(_cdl_unset)s"""
+                  # """ %(processName)-4s %(_cdl_process)spid=%(process)-5d%(_cdl_unset)s"""
+                  """ %(processName)-4s pid=%(process)-5d"""
                   # truncate thread name to 2 chars, we use 2char names or the process filter does MainThread/MT elsewhere
                   """ %(threadName)-2s"""
                   # """ %(thread)d"""
@@ -23,8 +24,8 @@ DEFAULT_FORMAT = ("""%(asctime)-15s"""
                   """%(filename)s"""
                   """ """
                   """%(lineno)d"""
-                  """ - %(message)s"""
-                  """%(_cdl_reset)s""")
+                  """ - %(message)s""")
+                  # """%(_cdl_reset)s""")
 
 
 def find_format_attrs(format_string):
@@ -84,7 +85,7 @@ def context_color_format_string(format_string, format_attrs):
     replacement = r"%(_cdl_\g<attr_name>)s\g<full_attr>%(_cdl_unset)s"
 
     # likely needs thread locking
-    # exc_info_post = '%(exc_text_sep)s%(exc_text)s'
+    # exc_info_post = '%(exc_text_sep)s%(exc_text)s%(exc_text_sep)s'
     # format_string = '%s%s' % (format_string, exc_info_post)
 
     # for match in format_attrs.groups():
@@ -387,7 +388,8 @@ class TermColorMapper(BaseColorMapper):
         for needed_attr in attrs_needed:
             if needed_attr in self.custom_attrs or needed_attr in in_a_group or needed_attr in self.high_cardinality:
                 continue
-            colors['_cdl_%s' % needed_attr] = self.get_name_color(getattr(record, needed_attr))
+            color_idx = self.get_name_color(getattr(record, needed_attr))
+            colors['_cdl_%s' % needed_attr] = color_idx
             # calc_colors.add(needed_attr)
 
         # set the default color based on computed values, lookup the color
@@ -454,11 +456,16 @@ class ColorFormatter(logging.Formatter):
         if self.usesTime():
             record.asctime = self.formatTime(record, self.datefmt)
 
-        record.exc_text_sep = ''
-        record.exc_text = ''
+        record.exc_text_sep = '\n'
+        # record.exc_text = ''
         if record.exc_info and not record.exc_text:
             record.exc_text = self.formatException(record.exc_info)
             record.exc_text_sep = '\n'
+
+    def _format_exception(self, record, colors, exc_text):
+        exc_text_post = '%(exc_text_sep)s%(exc_text)s%(exc_text_sep)s' % record.__dict__
+
+        return '%s%s%s' % (record._cdl_exc_text, exc_text_post, record._cdl_exc_text)
 
     def format(self, record):
         self._pre_format(record)
@@ -467,13 +474,16 @@ class ColorFormatter(logging.Formatter):
 
         # pprint.pprint(colors)
         s = self._format(record)
-        s = s + record.exc_text
+        if getattr(record, 'exc_text', None):
+            s = s + self._format_exception(record, colors, record.exc_text)
         return s
 
     # format is based on from stdlib python logging.LogFormatter.format()
     # It's kind of a pain to customize exception formatting, since it
     # just appends the exception string from formatException() to the formatted message.
     def _format(self, record):
+        # import pprint
+        # pprint.pprint(record.__dict__)
         record.message = record.getMessage()
         s = self.color_fmt % record.__dict__
         return s

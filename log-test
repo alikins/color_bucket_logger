@@ -84,6 +84,14 @@ def func2(logger, level, **kwargs):
     logger.log(level, 'blip bax: %s', 'bar')
 
 
+def throw_exc():
+    raise Exception('I object!')
+
+
+def func3():
+    return throw_exc()
+
+
 def gen_log_events(msg, sleep):
     loggers = []
     for name in gen_loggers('color_debug'):
@@ -97,6 +105,12 @@ def gen_log_events(msg, sleep):
         for level, levelname in LOG_LEVELS:
             func2(logger, level, blip='1212312')
             logger.log(level, msg)
+        # for level, levelname in LOG_LEVELS:
+        try:
+            func3()
+        except Exception as e:
+            log.exception(e)
+
     other_module.func3()
 
 
@@ -113,7 +127,7 @@ def _gen_log_events(handler):
 
 
 def main(args):
-    color_groups = [('threadName', ['process', 'processName', 'thread', 'message', 'default']),
+    color_groups = [('threadName', ['process', 'processName', 'thread', 'message', 'default', 'exc_text']),
                     # ('name', ['name', 'levelname']),
                     ('levelname', ['levelno'])]
     # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
