@@ -25,7 +25,7 @@ DEFAULT_FORMAT = ("""%(asctime)-15s"""
                   """ """
                   """%(lineno)d"""
                   """ - %(message)s""")
-                  # """%(_cdl_reset)s""")
+#                  """%(_cdl_reset)s""")
 
 
 def find_format_attrs(format_string):
@@ -371,19 +371,37 @@ class TermColorMapper(BaseColorMapper):
             colors['_cdl_threadName'] = tname_color
             colors['_cdl_exc_text'] = tid_color
 
+        # add a custom faux record attribute for the combo of name and funcName (module)?
+        # name_and_method = '%s.%s' % (record.name, record.funcName)
+        # name_and_method_color = self.get_name_color(name_and_method)
+        # colors['_cdl_name_funcName'] = name_and_method_color
+
         # fields we don't need to calculate indiv, since they will be a different group
         in_a_group = set()
 
-        # print('self.group_by: %s' % self.group_by)
+        # populate the set of groups members before figuring out any group colors
+        # for group, members in self.group_by:
+        #    for member in members:
+        #        in_a_group.add(member)
+
+        # find the color for any group keys before setting colors for group members
+        # TODO: extend group keys to let them be tuples
+        #       to allow (name, funcName) to get a color for module.function() instead of two sep
+        #       sim to module_and_method_color above
+        for group in group_by_attrs:
+            group_color = colors.get('_cdl_%s' % group, _default_color_index)
+            if group in self.custom_attrs or group in in_a_group or group in self.high_cardinality:
+                continue
+            color_idx = self.get_name_color(getattr(record, group))
+            colors['_cdl_%s' % group] = color_idx
+
         for group, members in self.group_by:
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
 
             for member in members:
                 colors['_cdl_%s' % member] = group_color
-                # print('group_color: %s' % group_color)
                 in_a_group.add(member)
 
-        # print('in_a_group: %s' % in_a_group)
         # calc_colors = set()
         for needed_attr in attrs_needed:
             if needed_attr in self.custom_attrs or needed_attr in in_a_group or needed_attr in self.high_cardinality:
@@ -472,7 +490,6 @@ class ColorFormatter(logging.Formatter):
         colors = self.color_mapper.get_colors_for_record(record)
         _apply_colors_to_record(record, colors)
 
-        # pprint.pprint(colors)
         s = self._format(record)
         if getattr(record, 'exc_text', None):
             s = s + self._format_exception(record, colors, record.exc_text)
@@ -482,8 +499,6 @@ class ColorFormatter(logging.Formatter):
     # It's kind of a pain to customize exception formatting, since it
     # just appends the exception string from formatException() to the formatted message.
     def _format(self, record):
-        # import pprint
-        # pprint.pprint(record.__dict__)
         record.message = record.getMessage()
         s = self.color_fmt % record.__dict__
         return s
