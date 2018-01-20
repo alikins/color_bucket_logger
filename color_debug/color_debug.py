@@ -109,6 +109,34 @@ def add_default_record_attrs(record, attr_list):
 RGB_COLOR_OFFSET = 16
 DEFAULT_COLOR_BY_ATTR = 'process'
 
+# Example uses of color_groups
+# color_groups = [
+# color almost everything by logger name
+#    ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname']),
+#    ('process', ['default', 'message']),
+#    ('process', ['processName', 'process']),
+#    ('thread', ['default', 'threadName', 'message', 'unset', 'processName', 'exc_text']),
+#    ('thread', ['threadName', 'thread']),
+#
+# color logger name, filename and lineno same as the funcName
+#   ('funcName', ['default', 'message', 'unset', 'name', 'filename', 'lineno']),
+# color message same as debug level
+#   ('levelname', ['levelname', 'levelno']),
+#
+# color funcName, filename, lineno same as logger name
+#   ('name', ['funcName', 'filename', 'lineno']),
+#
+#   ('time_color', ['asctime', 'relativeCreated', 'created', 'msecs']),
+#   ('task', ['task_uuid', 'task']),
+# color message and default same as funcName
+#   ('funcName', ['message', 'unset'])
+#
+#   ('funcName', ['relativeCreated', 'asctime'])
+#
+# color default, msg and playbook/play/task by the play
+#   ('play', ['default','message', 'unset', 'play', 'task']),
+# ]
+
 
 class BaseColorMapper(object):
     # default_color_groups is:
@@ -188,7 +216,6 @@ class TermColorMapper(BaseColorMapper):
     DEFAULT_COLOR = WHITE
     ALL_COLORS[DEFAULT_COLOR_IDX] = ALL_COLORS[DEFAULT_COLOR]
 
-
     # FIXME: use logging.DEBUG etc enums
     LEVEL_COLORS = {'TRACE': BLUE,
                     'SUBDEBUG': BLUE,
@@ -204,34 +231,6 @@ class TermColorMapper(BaseColorMapper):
                     'ERROR': RED,
                     # bold red?
                     'CRITICAL': RED}
-
-    _default_color_groups = [
-        # color almost everything by logger name
-        # ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname']),
-        # ('process', ['default', 'message']),
-        # ('process', ['processName', 'process']),
-        # ('thread', ['default', 'threadName', 'message', 'unset', 'processName', 'exc_text']),
-        # ('thread', ['threadName', 'thread']),
-
-        # color logger name, filename and lineno same as the funcName
-        # ('funcName', ['default', 'message', 'unset', 'name', 'filename', 'lineno']),
-        # color message same as debug level
-        ('levelname', ['levelname', 'levelno']),
-
-        # color funcName, filename, lineno same as logger name
-        # ('name', ['funcName', 'filename', 'lineno']),
-
-        # ('time_color', ['asctime', 'relativeCreated', 'created', 'msecs']),
-        # ('task', ['task_uuid', 'task']),
-        # color message and default same as funcName
-        # ('funcName', ['message', 'unset'])
-
-
-        # ('funcName', ['relativeCreated', 'asctime'])
-
-        # color default, msg and playbook/play/task by the play
-        # ('play', ['default','message', 'unset', 'play', 'task']),
-    ]
 
     # TODO: tie tid/threadName and process/processName together so they start same color
     #       so MainProcess, the first pid/processName are same, and maybe MainThread//first tid
