@@ -33,11 +33,12 @@ class DefaultAttrFilter(object):
 
 
 def _formatter(color_groups=None, fmt=None, default_color_by_attr=None):
-    color_groups = color_groups or [('name', ['name', 'levelname'])]
+    if color_groups is None:
+        color_groups = [('name', ['name', 'levelname'])]
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
     default_color_by_attr = default_color_by_attr or 'name'
     formatter = color_debug.ColorFormatter(fmt=fmt,
-                                           default_color_by_attr=default_color_by_attr,
+                                           # default_color_by_attr=default_color_by_attr,
                                            color_groups=color_groups)
 
     return formatter
@@ -55,8 +56,8 @@ def setup_logger(formatter):
 
 
 def gen_loggers(base_logger_name):
-    xs = string.uppercase
-    ys = string.lowercase
+    xs = string.ascii_uppercase
+    ys = string.ascii_lowercase
     zs = string.digits
     x_size = 1
     y_size = 1
@@ -84,12 +85,43 @@ def func2(logger, level, **kwargs):
     logger.log(level, 'blip bax: %s', 'bar')
 
 
-def throw_exc():
-    raise Exception('I object!')
+def throw_exc(msg=None):
+    _msg = 'I object!'
+    if msg:
+        _msg += msg
+    raise Exception(_msg)
+
+
+# to test nested exceptions, esp on py3
+def throw_deep_exc(msg=None):
+    try:
+        37/0
+    except ZeroDivisionError as outer_e:
+        log.exception(outer_e)
+        try:
+            doesnt_exist.append(1)  # noqa
+        except Exception as inner_e:
+            log.exception(inner_e)
+            throw_exc(msg=msg)
 
 
 def func3():
     return throw_exc()
+
+
+def func4():
+    try:
+        throw_deep_exc(msg=' to high prices!')
+    except Exception as e:
+        try:
+            raise e
+        except Exception as inner_e:
+            log.exception(inner_e)
+
+
+def random_sleep():
+    time.sleep(0.5*random.random())
+    return
 
 
 def gen_log_events(msg, sleep):
@@ -99,17 +131,23 @@ def gen_log_events(msg, sleep):
         loggers.append(_logger)
 
     for logger in loggers:
-        time.sleep(sleep)
         for level, levelname in LOG_LEVELS:
             func1(logger, level)
+            random_sleep()
         for level, levelname in LOG_LEVELS:
             func2(logger, level, blip='1212312')
             logger.log(level, msg)
+            random_sleep()
         # for level, levelname in LOG_LEVELS:
         try:
             func3()
+            random_sleep()
         except Exception as e:
             log.exception(e)
+        random_sleep()
+
+        func4()
+        random_sleep()
 
     other_module.func3()
 
@@ -127,14 +165,23 @@ def _gen_log_events(handler):
 
 
 def main(args):
-    color_groups = [('threadName', ['process', 'processName', 'thread', 'message', 'default', 'exc_text']),
-                    # ('name', ['name', 'levelname']),
-                    ('levelname', ['levelno'])]
+    color_groups = [
+                    #('thread', ['threadName']),
+                    # ('threadName', ['thread']),
+                    # ('levelname', ['levelno']),
+                    ('threadName', ['process', 'processName', 'thread']),
+                    ('name', ['module', 'filename', 'message']),
+                    ('funcName', ['lineno', 'exc_text'])
+                    # ('levelname', ['levelno'])]
+    ]
     # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
     fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
-    fmt_all = '%(asctime)s %(levelname)-0.1s %(levelno)-0.1d %(processName)-0.1s %(process)d %(threadName)s %(thread)d %(name)s %(module)s %(filename)s %(lineno)d - %(message)s'
+    fmt_all = '%(asctime)s %(levelname)-0.1s %(levelno)-0.1d %(processName)-0.1s %(process)d %(threadName)s %(thread)d %(name)s %(module)s %(filename)s %(lineno)d %(funcName)s - %(message)s'
 
-    formatter = _formatter(color_groups, fmt_all, default_color_by_attr='threadName')
+    formatter = _formatter(color_groups, fmt_all,
+                           default_color_by_attr='threadName',
+                           # default_color_by_attr='name')
+                           )
     logger, handler = setup_logger(formatter)
 
     import logging_tree
@@ -144,7 +191,8 @@ def main(args):
 
     main_thread = threading.currentThread()
 
-    for i in range(1):
+    thread_count = 3
+    for i in range(thread_count):
         t = threading.Thread(target=gen_log_events, name='T%s' % i,
                              args=('msg from thread #%s' % i, i))
         threads.append(t)
@@ -155,7 +203,7 @@ def main(args):
         if t is main_thread:
             continue
         # logging.debug('joining %s', t.getName())
-        t.join()
+        t.join(3)
     return 0
 
 
