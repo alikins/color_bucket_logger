@@ -32,14 +32,15 @@ class DefaultAttrFilter(object):
         return True
 
 
-def _formatter(color_groups=None, fmt=None, default_color_by_attr=None):
+def _formatter(color_groups=None, fmt=None, default_color_by_attr=None, auto_color=False):
     if color_groups is None:
         color_groups = [('name', ['name', 'levelname'])]
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
-    default_color_by_attr = default_color_by_attr or 'name'
+    # default_color_by_attr = default_color_by_attr or 'name'
     formatter = color_debug.ColorFormatter(fmt=fmt,
-                                           # default_color_by_attr=default_color_by_attr,
-                                           color_groups=color_groups)
+                                           default_color_by_attr=default_color_by_attr,
+                                           color_groups=color_groups,
+                                           auto_color=auto_color)
 
     return formatter
 
@@ -59,9 +60,9 @@ def gen_loggers(base_logger_name):
     xs = string.ascii_uppercase
     ys = string.ascii_lowercase
     zs = string.digits
-    x_size = 1
-    y_size = 1
-    z_size = 1
+    x_size = 2
+    y_size = 2
+    z_size = 2
 
     for x in [''] + list(xs[0:x_size]):
         for y in [''] + list(ys[0:y_size]):
@@ -130,11 +131,13 @@ def gen_log_events(msg, sleep):
         _logger = logging.getLogger(name)
         loggers.append(_logger)
 
+    import logging_tree
+    logging_tree.printout()
     for logger in loggers:
-        for level, levelname in LOG_LEVELS:
+        for level, levelname in LOG_LEVELS[:3]:
             func1(logger, level)
             random_sleep()
-        for level, levelname in LOG_LEVELS:
+        for level, levelname in LOG_LEVELS[:3]:
             func2(logger, level, blip='1212312')
             logger.log(level, msg)
             random_sleep()
@@ -146,8 +149,8 @@ def gen_log_events(msg, sleep):
             log.exception(e)
         random_sleep()
 
-        func4()
-        random_sleep()
+        # func4()
+        # random_sleep()
 
     other_module.func3()
 
@@ -169,17 +172,20 @@ def main(args):
                     #('thread', ['threadName']),
                     # ('threadName', ['thread']),
                     # ('levelname', ['levelno']),
-                    ('threadName', ['process', 'processName', 'thread']),
-                    ('name', ['module', 'filename', 'message']),
-                    ('funcName', ['lineno', 'exc_text'])
-                    # ('levelname', ['levelno'])]
+                    ('process', ['processName']),
+                    ('threadName', ['thread', 'exc_text']),
+                    # ('threadName', ['thread', 'message',]),
+                    ('name', ['module', 'filename']),
+                    ('funcName', ['lineno']),
+                    ('levelname', ['levelno'])
     ]
     # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
     fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
-    fmt_all = '%(asctime)s %(levelname)-0.1s %(levelno)-0.1d %(processName)-0.1s %(process)d %(threadName)s %(thread)d %(name)s %(module)s %(filename)s %(lineno)d %(funcName)s - %(message)s'
+    fmt_all = '%(asctime)s %(levelname)-0.1s %(process)d %(threadName)s %(name)s %(funcName)s %(lineno)d - %(message)s'
 
     formatter = _formatter(color_groups, fmt_all,
-                           default_color_by_attr='threadName',
+                           default_color_by_attr='name',
+                           auto_color=True,
                            # default_color_by_attr='name')
                            )
     logger, handler = setup_logger(formatter)
@@ -193,7 +199,7 @@ def main(args):
 
     thread_count = 3
     for i in range(thread_count):
-        t = threading.Thread(target=gen_log_events, name='T%s' % i,
+        t = threading.Thread(target=gen_log_events, name='Thrd-%s' % i,
                              args=('msg from thread #%s' % i, i))
         threads.append(t)
         t.daemon = True
@@ -203,7 +209,7 @@ def main(args):
         if t is main_thread:
             continue
         # logging.debug('joining %s', t.getName())
-        t.join(3)
+        t.join()
     return 0
 
 

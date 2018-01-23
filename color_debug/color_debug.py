@@ -146,24 +146,39 @@ class BaseColorMapper(object):
         # ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname']),
         # ('process', ['processName', 'thread', 'threadName']),
         # ('_cdl_default', ['asctime']),
-        ('levelname', ['levelname', 'levelno'])]
+        # ('levelname', ['levelname', 'levelno'])
+    ]
+    # custom_attrs are attributes we have specific methods for finding instead of the
+    # generic get_color_name. For ex, 'process' is found via get_process_color()
     custom_attrs = ['levelname', 'levelno', 'process', 'processName', 'thread', 'threadName']
     high_cardinality = set(['asctime', 'created', 'msecs', 'relativeCreated', 'args', 'message'])
 
     def __init__(self, fmt=None, default_color_by_attr=None,
-                 color_groups=None, format_attrs=None):
+                 color_groups=None, format_attrs=None,
+                 auto_color=False):
         self._fmt = fmt
         self.color_groups = color_groups or []
 
-        self.group_by = self.default_color_groups[:]
+        self.group_by = []
+        #self.group_by = self.default_color_groups[:]
         # self.group_by.extend(self.color_groups)
-        self.group_by = self.color_groups
+        # self.group_by = self.color_groups
 
         self.default_color_by_attr = default_color_by_attr or DEFAULT_COLOR_BY_ATTR
         self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
+        print('format_attrs: %s' % format_attrs)
+        # make sure the defaut color attr is in the group_by list
+        if default_color_by_attr:
+            self.group_by.insert(0, (default_color_by_attr, [default_color_by_attr]))
+            #format_attr_names = [z[1] for z in format_attrs]
+            #self.group_by.insert(0, (default_color_by_attr, format_attr_names) )
+
+        self.group_by.extend(self.color_groups)
+
         self._format_attrs = format_attrs
 
+        self.auto_color = auto_color
         # import pprint
         # pprint.pprint(('color_groups', color_groups))
 
@@ -322,6 +337,7 @@ class TermColorMapper(BaseColorMapper):
         '''For a log record, compute color for each field and return a color dict'''
 
         _default_color_index = self.DEFAULT_COLOR_IDX
+        auto_colors = False
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
         # record._cdl_reset = self.RESET_SEQ
         # record._cdl_default = self.default_color
@@ -339,7 +355,7 @@ class TermColorMapper(BaseColorMapper):
         # could be self._format_attrs (actually used in format string) + any referenced as color_group keys
         group_by_attrs = [y[0] for y in self.group_by]
 
-        format_attrs = [z[1] for z in self._format_attrs]
+        format_attrs = [z[1] for z in self._format_attrs] + ['exc_text']
 
         # attrs_needing_default = self.default_record_attrs + self.custom_record_attrs
         attrs_needed = group_by_attrs + format_attrs
@@ -369,7 +385,7 @@ class TermColorMapper(BaseColorMapper):
             if attr in group_by_attrs:
                 use_thread_color = True
 
-        if use_thread_color:
+        if use_thread_color or self.auto_color:
             pname_color, pid_color, tname_color, tid_color = self.get_process_colors(record)
 
             colors['_cdl_process'] = pid_color
@@ -397,7 +413,7 @@ class TermColorMapper(BaseColorMapper):
         #       sim to module_and_method_color above
         for group in group_by_attrs:
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
-            if group in self.custom_attrs or group in in_a_group or group in self.high_cardinality:
+            if group in self.custom_attrs or group in in_a_group:
                 continue
             color_idx = self.get_name_color(getattr(record, group))
             # print(('group', group))
@@ -414,8 +430,10 @@ class TermColorMapper(BaseColorMapper):
                 in_a_group.add(member)
 
         # calc_colors = set()
+        # for everything else, use the name/string to get a color if auto_colors is True
         for needed_attr in attrs_needed:
-            if needed_attr in self.custom_attrs or needed_attr in in_a_group or needed_attr in self.high_cardinality:
+            if needed_attr in self.custom_attrs or needed_attr in in_a_group \
+                    or needed_attr in self.high_cardinality or not self.auto_color:
                 continue
             color_idx = self.get_name_color(getattr(record, needed_attr))
             colors['_cdl_%s' % needed_attr] = color_idx
@@ -456,7 +474,8 @@ class ColorFormatter(logging.Formatter):
             self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
         return self._color_fmt
 
-    def __init__(self, fmt=None, default_color_by_attr=None, color_groups=None):
+    def __init__(self, fmt=None, default_color_by_attr=None,
+                 color_groups=None, auto_color=False):
         fmt = fmt or DEFAULT_FORMAT
         logging.Formatter.__init__(self, fmt)
         self._base_fmt = fmt
@@ -467,14 +486,15 @@ class ColorFormatter(logging.Formatter):
         self.color_groups = color_groups or []
 
         # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
-        self.default_color_by_attr = default_color_by_attr or 'process'
+        # self.default_color_by_attr = default_color_by_attr or 'process'
         # the name of the record attribute to check for a default color
-        self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
+        # self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
         self.color_mapper = TermColorMapper(fmt=self._base_fmt,
-                                            default_color_by_attr=self.default_color_by_attr,
+                                            default_color_by_attr=default_color_by_attr,
                                             color_groups=self.color_groups,
-                                            format_attrs=self._format_attrs)
+                                            format_attrs=self._format_attrs,
+                                            auto_color=auto_color)
 
     def _pre_format(self, record):
         '''render time and exception info to be a string
