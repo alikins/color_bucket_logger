@@ -143,8 +143,8 @@ class BaseColorMapper(object):
     #  ('attr', list_of_attrs_to_use 'attr''s color
     default_color_groups = [
         # color almost everything by logger name
-        ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname']),
-        ('process', ['processName', 'thread', 'threadName']),
+        # ('name', ['filename', 'module', 'lineno', 'funcName', 'pathname']),
+        # ('process', ['processName', 'thread', 'threadName']),
         # ('_cdl_default', ['asctime']),
         ('levelname', ['levelname', 'levelno'])]
     custom_attrs = ['levelname', 'levelno', 'process', 'processName', 'thread', 'threadName']
@@ -156,12 +156,16 @@ class BaseColorMapper(object):
         self.color_groups = color_groups or []
 
         self.group_by = self.default_color_groups[:]
-        self.group_by.extend(self.color_groups)
+        # self.group_by.extend(self.color_groups)
+        self.group_by = self.color_groups
 
         self.default_color_by_attr = default_color_by_attr or DEFAULT_COLOR_BY_ATTR
         self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
         self._format_attrs = format_attrs
+
+        # import pprint
+        # pprint.pprint(('color_groups', color_groups))
 
     def get_thread_color(self, thread_id):
         '''return color idx for thread_id'''
@@ -383,7 +387,7 @@ class TermColorMapper(BaseColorMapper):
         in_a_group = set()
 
         # populate the set of groups members before figuring out any group colors
-        # for group, members in self.group_by:
+        #for group, members in self.group_by:
         #    for member in members:
         #        in_a_group.add(member)
 
@@ -396,11 +400,15 @@ class TermColorMapper(BaseColorMapper):
             if group in self.custom_attrs or group in in_a_group or group in self.high_cardinality:
                 continue
             color_idx = self.get_name_color(getattr(record, group))
+            # print(('group', group))
+            # if group == 'threadName':
+            #    print((record.threadName, color_idx))
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
 
+            # print(('group2', group))
             for member in members:
                 colors['_cdl_%s' % member] = group_color
                 in_a_group.add(member)
@@ -482,13 +490,14 @@ class ColorFormatter(logging.Formatter):
             record.exc_text_sep = '\n'
 
     def _format_exception(self, record, colors, exc_text):
-        exc_text_post = '%(exc_text_sep)s%(exc_text)s%(exc_text_sep)s' % record.__dict__
+        exc_text_post = '%(exc_text_sep)s%(_cdl_exc_text)s%(exc_text)s%(_cdl_reset)s%(exc_text_sep)s' % record.__dict__
 
-        return '%s%s%s' % (record._cdl_exc_text, exc_text_post, record._cdl_exc_text)
+        return exc_text_post
 
     def format(self, record):
         self._pre_format(record)
         colors = self.color_mapper.get_colors_for_record(record)
+        # pprint.pprint(colors)
         _apply_colors_to_record(record, colors)
 
         s = self._format(record)
