@@ -212,10 +212,13 @@ class TermColorMapper(BaseColorMapper):
     # NUMBER_OF_THREAD_COLORS = 216
     # the xterm256 colors 0-8 and 8-16 are normal and bright term colors, 16-231 is from a 6x6x6 rgb cube
     # 232-255 are the grays (white to gray to black)
-    RGB_COLOR_OFFSET = 16
+    RGB_COLOR_OFFSET = 16 + 2
+    # +2 is to skip black and very dark blue as valid color.
+    # FIXME: needs to learn to support dark/light themes
     START_OF_THREAD_COLORS = RGB_COLOR_OFFSET
     END_OF_THREAD_COLORS = 231
     NUMBER_OF_THREAD_COLORS = END_OF_THREAD_COLORS - RGB_COLOR_OFFSET
+
     BASE_COLORS = dict((color_number, color_seq) for
                        (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
     # \ x 1 b [ 38 ; 5; 231m
@@ -225,6 +228,9 @@ class TermColorMapper(BaseColorMapper):
     ALL_COLORS.update(BASE_COLORS)
     ALL_COLORS.update(THREAD_COLORS)
 
+    # import sys
+    #for x in ALL_COLORS:
+    #    sys.stdout.write("%s: %sX - X - X - X - X - X%s\n" % (x, ALL_COLORS[x], RESET_SEQ))
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = BASE_COLORS.keys()
 
     DEFAULT_COLOR_IDX = 257
@@ -272,7 +278,8 @@ class TermColorMapper(BaseColorMapper):
     def get_name_color(self, name, perturb=None):
         # if name == '':
         #    return self._default_color_index
-        perturb = perturb or ''
+        perturb = perturb or 'xccvsdfb'
+        perturb = 'dsfadddddd'
         name = '%s%s' % (name, perturb)
         # name_hash = hash(name)
         name_hash = sum([ord(x) for x in name])
@@ -414,7 +421,7 @@ class TermColorMapper(BaseColorMapper):
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
             if group in self.custom_attrs or group in in_a_group:
                 continue
-            color_idx = self.get_name_color(getattr(record, group))
+            color_idx = self.get_name_color(getattr(record, group), 'sdsdf')
             # print(('group', group))
             # if group == 'threadName':
             #    print((record.threadName, color_idx))
@@ -474,9 +481,9 @@ class ColorFormatter(logging.Formatter):
         return self._color_fmt
 
     def __init__(self, fmt=None, default_color_by_attr=None,
-                 color_groups=None, auto_color=False):
+                 color_groups=None, auto_color=False, datefmt=None):
         fmt = fmt or DEFAULT_FORMAT
-        logging.Formatter.__init__(self, fmt)
+        logging.Formatter.__init__(self, fmt, datefmt=datefmt)
         self._base_fmt = fmt
         self._color_fmt = None
 
@@ -495,10 +502,18 @@ class ColorFormatter(logging.Formatter):
                                             format_attrs=self._format_attrs,
                                             auto_color=auto_color)
 
+    def __repr__(self):
+        buf = 'ColorFormatter(fmt="%s", datefmt="%s", auto_color=%s)' % (self._base_fmt,
+                                                                         self.datefmt,
+                                                                         self.color_mapper.auto_color)
+        return buf
+
     def _pre_format(self, record):
         '''render time and exception info to be a string
 
         Modifies record by side effect.'''
+        #import pprint
+        # pprint.pprint(record.__dict__)
         if self.usesTime():
             record.asctime = self.formatTime(record, self.datefmt)
 
@@ -515,6 +530,10 @@ class ColorFormatter(logging.Formatter):
 
     def format(self, record):
         self._pre_format(record)
+        # for py3.2+ compat
+        record = add_default_record_attrs(record, ['stack_info'])
+        if not hasattr(record, 'stack_depth'):
+            setattr(record, 'stack_depth', '')
         colors = self.color_mapper.get_colors_for_record(record)
         # pprint.pprint(colors)
         _apply_colors_to_record(record, colors)
@@ -528,6 +547,7 @@ class ColorFormatter(logging.Formatter):
     # It's kind of a pain to customize exception formatting, since it
     # just appends the exception string from formatException() to the formatted message.
     def _format(self, record):
+
         record.message = record.getMessage()
         s = self.color_fmt % record.__dict__
         return s
