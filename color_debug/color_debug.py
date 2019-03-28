@@ -160,7 +160,7 @@ class BaseColorMapper(object):
         self.color_groups = color_groups or []
 
         self.group_by = []
-        #self.group_by = self.default_color_groups[:]
+        # self.group_by = self.default_color_groups[:]
         # self.group_by.extend(self.color_groups)
         # self.group_by = self.color_groups
 
@@ -170,8 +170,8 @@ class BaseColorMapper(object):
         # make sure the defaut color attr is in the group_by list
         if default_color_by_attr:
             self.group_by.insert(0, (default_color_by_attr, [default_color_by_attr]))
-            #format_attr_names = [z[1] for z in format_attrs]
-            #self.group_by.insert(0, (default_color_by_attr, format_attr_names) )
+            # format_attr_names = [z[1] for z in format_attrs]
+            # self.group_by.insert(0, (default_color_by_attr, format_attr_names) )
 
         self.group_by.extend(self.color_groups)
 
@@ -229,7 +229,7 @@ class TermColorMapper(BaseColorMapper):
     ALL_COLORS.update(THREAD_COLORS)
 
     # import sys
-    #for x in ALL_COLORS:
+    # for x in ALL_COLORS:
     #    sys.stdout.write("%s: %sX - X - X - X - X - X%s\n" % (x, ALL_COLORS[x], RESET_SEQ))
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = BASE_COLORS.keys()
 
@@ -343,7 +343,6 @@ class TermColorMapper(BaseColorMapper):
         '''For a log record, compute color for each field and return a color dict'''
 
         _default_color_index = self.DEFAULT_COLOR_IDX
-        auto_colors = False
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
         # record._cdl_reset = self.RESET_SEQ
         # record._cdl_default = self.default_color
@@ -409,7 +408,7 @@ class TermColorMapper(BaseColorMapper):
         in_a_group = set()
 
         # populate the set of groups members before figuring out any group colors
-        #for group, members in self.group_by:
+        # for group, members in self.group_by:
         #    for member in members:
         #        in_a_group.add(member)
 
@@ -512,7 +511,7 @@ class ColorFormatter(logging.Formatter):
         '''render time and exception info to be a string
 
         Modifies record by side effect.'''
-        #import pprint
+        # import pprint
         # pprint.pprint(record.__dict__)
         if self.usesTime():
             record.asctime = self.formatTime(record, self.datefmt)
