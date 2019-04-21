@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `color_debug` package."""
+"""Tests for `color_bucket_logger` package."""
 
 import pytest
 
@@ -14,7 +14,7 @@ except ImportError:
         def emit(self, record):
             pass
 
-from color_debug import color_debug
+from color_debug import color_bucket_logger
 
 
 class BufHandler(logging.Handler):
@@ -46,13 +46,13 @@ def response():
 
 def test_find_format_attrs():
     format_string = 'foo %(process)d blip'
-    res = color_debug.find_format_attrs(format_string)
+    res = color_bucket_logger.find_format_attrs(format_string)
     assert ('%(process)d', 'process') in res
 
 
 def test_find_format_attrs_precision():
     format_string = '%(levelname)-0.1s %(threadName)-2s %(process)-5d %(lineno)d'
-    res = color_debug.find_format_attrs(format_string)
+    res = color_bucket_logger.find_format_attrs(format_string)
     assert ('%(levelname)-0.1s', 'levelname') in res
     assert ('%(process)-5d', 'process') in res
     assert ('%(threadName)-2s', 'threadName') in res
@@ -62,9 +62,9 @@ def test_find_format_attrs_precision():
 def setup_logger(color_groups=None, fmt=None):
     color_groups = color_groups or [('name', ['name', 'levelname'])]
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
-    formatter = color_debug.ColorFormatter(fmt=fmt,
-                                           default_color_by_attr='name',
-                                           color_groups=color_groups)
+    formatter = color_bucket_logger.ColorFormatter(fmt=fmt,
+                                                   default_color_by_attr='name',
+                                                   color_groups=color_groups)
     logger = logging.getLogger(__name__ + '.test_logger')
     logger.setLevel(logging.DEBUG)
     handler = BufHandler(level=logging.DEBUG)
@@ -106,11 +106,11 @@ def test_stuff():
 
 def test_init(response):
     """Just init the class"""
-    formatter = color_debug.ColorFormatter()
-    assert isinstance(formatter, color_debug.ColorFormatter)
+    formatter = color_bucket_logger.ColorFormatter()
+    assert isinstance(formatter, color_bucket_logger.ColorFormatter)
 
 
 def test_null_handler(response):
     nh = NullHandler()
-    formatter = color_debug.ColorFormatter()
+    formatter = color_bucket_logger.ColorFormatter()
     nh.setFormatter(formatter)
