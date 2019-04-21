@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install color_debug, run this command in your terminal:
+To install color_bucket_logger, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install color_debug
+    $ pip install color_bucket_logger
 
-This is the preferred method to install color_debug, as it will always install the most recent stable release. 
+This is the preferred method to install color_bucket_logger, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,19 +26,19 @@ you through the process.
 From sources
 ------------
 
-The sources for color_debug can be downloaded from the `Github repo`_.
+The sources for color_bucket_logger can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/alikins/color_debug
+    $ git clone git://github.com/alikins/color_bucket_logger
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/alikins/color_debug/tarball/master
+    $ curl  -OL https://github.com/alikins/color_bucket_logger/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/alikins/color_debug
-.. _tarball: https://github.com/alikins/color_debug/tarball/master
+.. _Github repo: https://github.com/alikins/color_bucket_logger
+.. _tarball: https://github.com/alikins/color_bucket_logger/tarball/master

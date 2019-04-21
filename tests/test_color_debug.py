@@ -14,7 +14,7 @@ except ImportError:
         def emit(self, record):
             pass
 
-from color_debug import color_bucket_logger
+from color_bucket_logger import color_bucket_logger
 
 
 class BufHandler(logging.Handler):

@@ -1,20 +1,20 @@
 ===========
-color_debug
+color_bucket_logger
 ===========
 
 
-.. image:: https://img.shields.io/pypi/v/color_debug.svg
-        :target: https://pypi.python.org/pypi/color_debug
+.. image:: https://img.shields.io/pypi/v/color_bucket_logger.svg
+        :target: https://pypi.python.org/pypi/color_bucket_logger
 
-.. image:: https://img.shields.io/travis/alikins/color_debug.svg
-        :target: https://travis-ci.org/alikins/color_debug
+.. image:: https://img.shields.io/travis/alikins/color_bucket_logger.svg
+        :target: https://travis-ci.org/alikins/color_bucket_logger
 
 .. image:: https://readthedocs.org/projects/color-debug/badge/?version=latest
         :target: https://color-debug.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/alikins/color_debug/shield.svg
-     :target: https://pyup.io/repos/github/alikins/color_debug/
+.. image:: https://pyup.io/repos/github/alikins/color_bucket_logger/shield.svg
+     :target: https://pyup.io/repos/github/alikins/color_bucket_logger/
      :alt: Updates
 
 

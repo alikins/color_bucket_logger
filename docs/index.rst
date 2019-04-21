@@ -1,4 +1,4 @@
-Welcome to color_debug's documentation!
+Welcome to color_bucket_logger's documentation!
 ======================================
 
 Contents:

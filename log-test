@@ -10,10 +10,10 @@ import time
 
 import logging_tree
 
-import color_debug
-from color_debug import other_module
+import color_bucket_logger
+from color_bucket_logger import other_module
 
-log = logging.getLogger('color_debug')
+log = logging.getLogger('color_bucket_logger')
 log.setLevel(logging.DEBUG)
 
 
@@ -30,7 +30,7 @@ class DefaultAttrFilter(object):
         self.attrs = attrs
 
     def filter(self, record):
-        color_debug.add_default_record_attrs(record, self.attrs)
+        color_bucket_logger.add_default_record_attrs(record, self.attrs)
         return True
 
 
@@ -39,10 +39,10 @@ def _formatter(color_groups=None, fmt=None, default_color_by_attr=None, auto_col
         color_groups = [('name', ['name', 'levelname'])]
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
     # default_color_by_attr = default_color_by_attr or 'name'
-    formatter = color_debug.ColorFormatter(fmt=fmt,
-                                           default_color_by_attr=default_color_by_attr,
-                                           color_groups=color_groups,
-                                           auto_color=auto_color)
+    formatter = color_bucket_logger.ColorFormatter(fmt=fmt,
+                                                   default_color_by_attr=default_color_by_attr,
+                                                   color_groups=color_groups,
+                                                   auto_color=auto_color)
 
     return formatter
 
@@ -129,7 +129,7 @@ def random_sleep():
 
 def gen_log_events(msg, sleep):
     loggers = []
-    for name in gen_loggers('color_debug'):
+    for name in gen_loggers('color_bucket_logger'):
         _logger = logging.getLogger(name)
         loggers.append(_logger)
 

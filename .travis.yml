@@ -25,5 +25,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: alikins/color_debug
+    repo: alikins/color_bucket_logger
     python: 2.7

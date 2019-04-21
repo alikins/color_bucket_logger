@@ -26,19 +26,19 @@ test_requirements = [
 ]
 
 setup(
-    name='color_debug',
+    name='color_bucket_logger',
     version='0.1.0',
     description="color_debug_desc",
     long_description=readme + '\n\n' + history,
     author="Adrian Likins",
     author_email='adrian@likins.com',
-    url='https://github.com/alikins/color_debug',
-    packages=find_packages(include=['color_debug']),
+    url='https://github.com/alikins/color_bucket_logger',
+    packages=find_packages(include=['color_bucket_logger']),
     include_package_data=True,
     install_requires=requirements,
     license="MIT license",
     zip_safe=False,
-    keywords='color_debug',
+    keywords='color_bucket_logger',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
