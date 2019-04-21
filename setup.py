@@ -28,7 +28,7 @@ test_requirements = [
 setup(
     name='color_bucket_logger',
     version='0.1.0',
-    description="color_debug_desc",
+    description="color bucket logger",
     long_description=readme + '\n\n' + history,
     author="Adrian Likins",
     author_email='adrian@likins.com',

@@ -1,4 +1,4 @@
-* color_debug version:
+* color_bucket_logger version:
 * Python version:
 * Operating System:
 
