@@ -1,5 +1,5 @@
 Welcome to color_bucket_logger's documentation!
-======================================
+===============================================
 
 Contents:
 

@@ -1,6 +1,6 @@
-===========
+===================
 color_bucket_logger
-===========
+===================
 
 
 .. image:: https://img.shields.io/pypi/v/color_bucket_logger.svg
