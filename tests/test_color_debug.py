@@ -14,7 +14,7 @@ except ImportError:
         def emit(self, record):
             pass
 
-from color_bucket_logger import color_bucket_logger
+import color_bucket_logger
 
 
 class BufHandler(logging.Handler):
@@ -46,13 +46,13 @@ def response():
 
 def test_find_format_attrs():
     format_string = 'foo %(process)d blip'
-    res = color_bucket_logger.find_format_attrs(format_string)
+    res = color_bucket_logger.formatter.find_format_attrs(format_string)
     assert ('%(process)d', 'process') in res
 
 
 def test_find_format_attrs_precision():
     format_string = '%(levelname)-0.1s %(threadName)-2s %(process)-5d %(lineno)d'
-    res = color_bucket_logger.find_format_attrs(format_string)
+    res = color_bucket_logger.formatter.find_format_attrs(format_string)
     assert ('%(levelname)-0.1s', 'levelname') in res
     assert ('%(process)-5d', 'process') in res
     assert ('%(threadName)-2s', 'threadName') in res
@@ -84,14 +84,16 @@ def test_get_name_color():
 
 
 def test_stuff():
+    fmt_string = '%(levelname)s %(created)s %(filename)s %(funcName)s '
+    '%(levelno)s %(module)s %(pathname)s %(process)d '
+    '%(thread)d %(name)s %(message)s'
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                              fmt='%(levelname)s %(created)s %(filename)s %(funcName)s ' +
-                                              '%(levelno)s %(module)s %(pathname)s %(process)d ' +
-                                              '%(thread)d %(name)s %(message)s')
+                                              fmt=fmt_string)
 
+    sfmt = '%(levelname)s %(filename)s %(process)d'
+    '%(thread)d %(name)s %(message)s'
     slogger, shandler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                                fmt='%(levelname)s %(filename)s %(process)d' +
-                                                '%(thread)d %(name)s %(message)s')
+                                                fmt=sfmt)
 
     logger.debug('D: %s', '_debug')
     logger.info('I: %s', '_info')

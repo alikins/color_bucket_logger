@@ -11,9 +11,9 @@ import time
 import logging_tree
 
 import color_bucket_logger
-from color_bucket_logger import other_module
+# from color_bucket_logger import other_module
 
-log = logging.getLogger('color_bucket_logger')
+log = logging.getLogger('cbl_test')
 log.setLevel(logging.DEBUG)
 
 
@@ -77,15 +77,15 @@ def gen_loggers(base_logger_name):
 
 
 def func1(logger, level, **kwargs):
-
     extra = {'random': random.randint(0, 7),
              'other': 'i like cheese'}
     extra.update(kwargs)
-    logger.log(level, 'foo blip:', extra=extra)
+    logger.log(level, 'foo blip level=%s' % level, extra=extra)
 
 
 def func2(logger, level, **kwargs):
-    logger.log(level, 'blip bax: %s', 'bar')
+    msg = 'func2 test level=%s %%s' % level
+    logger.log(level, msg, 'bar')
 
 
 def throw_exc(msg=None):
@@ -98,7 +98,7 @@ def throw_exc(msg=None):
 # to test nested exceptions, esp on py3
 def throw_deep_exc(msg=None):
     try:
-        37/0
+        37 / 0
     except ZeroDivisionError as outer_e:
         log.exception(outer_e)
         try:
@@ -109,7 +109,8 @@ def throw_deep_exc(msg=None):
 
 
 def func3():
-    return throw_exc()
+    pass
+    # return throw_exc()
 
 
 def func4():
@@ -123,13 +124,13 @@ def func4():
 
 
 def random_sleep():
-    time.sleep(0.5*random.random())
+    time.sleep(0.5 * random.random())
     return
 
 
 def gen_log_events(msg, sleep):
     loggers = []
-    for name in gen_loggers('color_bucket_logger'):
+    for name in gen_loggers('cbl_test'):
         _logger = logging.getLogger(name)
         loggers.append(_logger)
 
@@ -153,7 +154,7 @@ def gen_log_events(msg, sleep):
         # func4()
         # random_sleep()
 
-    other_module.func3()
+    color_bucket_logger.other_module.func3()
 
 
 def _gen_log_events(handler):
@@ -170,7 +171,7 @@ def _gen_log_events(handler):
 
 def main(args):
     color_groups = [
-                    #('thread', ['threadName']),
+                    # ('thread', ['threadName']),
                     # ('threadName', ['thread']),
                     # ('levelname', ['levelno']),
                     ('process', ['processName']),
@@ -181,7 +182,7 @@ def main(args):
                     ('levelname', ['levelno'])
     ]
     # fmt = '%(asctime)s %(relativeCreated)d %(levelname)s %(module)s %(name)s %(funcName)s %(random)s %(message)s'
-    fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
+    # fmt = '%(asctime)s %(threadName)-2s level: %(levelname)s module: %(module)s name: %(name)s funcName: %(funcName)s %(message)s'
     fmt_all = '%(asctime)s %(levelname)-0.1s %(process)d %(threadName)s %(name)s %(funcName)s %(lineno)d - %(message)s'
 
     formatter = _formatter(color_groups, fmt_all,
@@ -198,7 +199,7 @@ def main(args):
 
     main_thread = threading.currentThread()
 
-    thread_count = 3
+    thread_count = 1
     for i in range(thread_count):
         t = threading.Thread(target=gen_log_events, name='Thrd-%s' % i,
                              args=('msg from thread #%s' % i, i))
