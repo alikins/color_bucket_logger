@@ -22,8 +22,7 @@ formatters:
     # For example, to let 'process' and 'processName' fields use the 'process' color,
     # a color groups entry: "['process', ['processName']]'
     color_groups:
-      - ['process', ['processName']]
-      # - ['name', ['exc_text']]
+        # - ['process', ['processName']]
       - ['levelname', ['levelname']]
       - ['funcName', ['lineno']]
 handlers:
