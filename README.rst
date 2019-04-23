@@ -33,6 +33,34 @@ fields can be colorized based on an attribute value.
 For example, the fields for 'thread', 'threadName', 'process', 'processName' could be colorized
 based on the thread id.
 
+Usage
+-----
+
+Examples
+--------
+
+Basic config colorized by logger name::
+
+    import logging
+
+    import color_bucket_logger
+
+    log = logging.getLogger('example')
+    log.setLevel(logging.DEBUG)
+
+    log_format = '%(asctime)s %(process)s %(levelname)s %(name)s %(funcName)s -- %(message)s'
+
+    # Use logger name for the primary color of each entry
+    formatter = color_bucket_logger.ColorFormatter(fmt=log_format, default_color_by_attr='name')
+
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+
+    # basicConfig will add our handler to the root logger
+    # Note 'handlers' arg is py3 only
+    logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+
 License
 -------
 
