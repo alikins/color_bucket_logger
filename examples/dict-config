@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+import logging
+import logging.config
+import sys
+
+from gen_log_entries import run
+
+log_config = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'color': {
+            '()': 'color_bucket_logger.ColorFormatter',
+            'format': '[%(asctime)s %(process)05d %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)d - %(message)s',
+            # 'fmt': '[%(asctime)s %(process)05d %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)d - %(message)s',
+            'default_color_by_attr': 'name',
+            'color_groups': [
+                ['msg', ['message']],
+                ['process', ['processName']],
+                ['levelname', ['levelname']],
+                ['funcName', ['lineno']],
+            ]
+        },
+    },
+    'filters': {},
+    'handlers': {
+        'buffered': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'color',
+            'stream': 'ext://sys.stdout',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['buffered'],
+            'level': 'DEBUG',
+        },
+        'foo': {
+            # 'handlers': ['buffered'],
+            'level': 'DEBUG',
+        },
+        'bar': {
+            # 'handlers': ['buffered'],
+            'level': 'DEBUG',
+        },
+    }
+}
+
+conf = logging.config.dictConfig(log_config)
+
+if __name__ == '__main__':
+    run()
+    sys.exit()
