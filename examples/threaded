@@ -17,5 +17,5 @@ with open(log_config_path, 'r') as log_config_fd:
 conf = logging.config.dictConfig(log_config)
 
 if __name__ == '__main__':
-    run_threaded()
+    run_threaded(thread_count=5)
     sys.exit()

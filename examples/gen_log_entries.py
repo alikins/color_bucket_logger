@@ -35,6 +35,12 @@ def log_more_stuff():
     logging.debug('A debug message')
 
 
+def log_thread_msg(thread_msg):
+    flog.warn(thread_msg)
+    blog.info(thread_msg)
+    logging.debug(thread_msg)
+
+
 # to test nested exceptions, esp on py3
 def throw_deep_exc(msg=None):
     try:
@@ -57,7 +63,12 @@ def gen_log_events(thread_msg=None):
 
     log_more_stuff()
 
+    # Generate log messages that reference the thread we expect it to come from
+    log_thread_msg(thread_msg)
+
     throw_deep_exc('This example is raise as an example of log.exception() handling')
+
+    log_more_stuff()
 
 
 def run():
@@ -69,7 +80,7 @@ def run():
 
 def run_threaded(thread_count=2):
     threads = []
-    thread_time_increment = 0.01  # seconds
+    thread_time_increment = 0.001  # seconds
     main_thread = threading.currentThread()
 
     for i in range(thread_count):
@@ -77,12 +88,19 @@ def run_threaded(thread_count=2):
         # interval = 0
         t = threading.Timer(interval=interval,
                             function=gen_log_events,
-                            args=('msg from thread #%s' % i,))
-        # t = threading.Thread(target=gen_log_events, name='Thrd-%s' % i,
-        #                     args=('msg from thread #%s' % i,))
+                            # Timers use auto created threadname 'Thread-$count', where count starts at 1,
+                            # hence the +1 here.
+                            args=('msg from thread #%s' % (i + 1,),))
+        # An example of threads where they have a vague unuseful threadName
+        # For ex, when there are 10 threads all named 'helper'
+        named_thread = threading.Thread(target=gen_log_events, name='VagueThreadName',
+                             args=('msg from vague thread #%s' % i,))
         threads.append(t)
+        threads.append(named_thread)
         t.daemon = True
+        named_thread.daemon = True
         t.start()
+        named_thread.start()
 
     for t in threading.enumerate():
         if t is main_thread:
