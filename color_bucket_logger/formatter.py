@@ -200,7 +200,7 @@ class ColorFormatter(logging.Formatter):
         record_context['message'] = record.getMessage()
 
         # Format the main part of the log message first
-        s = self._format(record, record_context)
+        s = self._format(record_context)
 
         # Then append the formatted exception info if there is any
         if record_context.get('exc_text', None):
@@ -214,7 +214,7 @@ class ColorFormatter(logging.Formatter):
     # Note that self._format here is more or less the same as py3's Formatter.formatMessage()
     # and self.color_fmt is similar to py3's Formatter._style, but neither are used here
     # for py2 compat.
-    def _format(self, record, record_context):
+    def _format(self, record_context):
 
         # record.message = record.getMessage()
 
