@@ -169,32 +169,55 @@ class ColorFormatter(logging.Formatter):
             record.exc_text = self.formatException(record.exc_info)
             record.exc_text_sep = '\n'
 
-    def _format_exception(self, record, colors, exc_text):
-        exc_text_post = '%(exc_text_sep)s%(_cdl_exc_text)s%(exc_text)s%(_cdl_reset)s%(exc_text_sep)s' % record.__dict__
+    def _format_exception(self, record_context):
+        exc_text_post = '%(exc_text_sep)s%(_cdl_exc_text)s%(exc_text)s%(_cdl_reset)s%(exc_text_sep)s' % record_context
 
         return exc_text_post
-
-    def format(self, record):
-        self._pre_format(record)
-        # for py3.2+ compat
-        record = add_default_record_attrs(record, ['stack_info'])
-        if not hasattr(record, 'stack_depth'):
-            setattr(record, 'stack_depth', '')
-        colors = self.color_mapper.get_colors_for_record(record)
-        # pprint.pprint(colors)
-        _apply_colors_to_record(record, colors)
-
-        s = self._format(record)
-        if getattr(record, 'exc_text', None):
-            s = s + self._format_exception(record, colors, record.exc_text)
-            # record.exc_text = None
-        return s
 
     # format is based on from stdlib python logging.LogFormatter.format()
     # It's kind of a pain to customize exception formatting, since it
     # just appends the exception string from formatException() to the formatted message.
-    def _format(self, record):
+    def format(self, record):
+        self._pre_format(record)
 
-        record.message = record.getMessage()
-        s = self.color_fmt % record.__dict__
+        # for py3.2+ compat
+        record = add_default_record_attrs(record, ['stack_info'])
+        if not hasattr(record, 'stack_depth'):
+            setattr(record, 'stack_depth', '')
+
+        # Figure out what each log records color will be and return
+        # a dict key'ed by a string of form '%_cdl_' + the log record attr name
+        colors = self.color_mapper.get_colors_for_record(record)
+
+        # _apply_colors_to_record(record, colors)
+
+        # Create a context dict of the log records attributes (the __dict__ of
+        # the LogRecord() plus all of the color map items from the 'colors' dict.
+        # This avoids having to modify the LogRecord() instance in place.
+        record_context = {}
+        record_context.update(record.__dict__)
+        record_context.update(colors)
+        record_context['message'] = record.getMessage()
+
+        # Format the main part of the log message first
+        s = self._format(record, record_context)
+
+        # Then append the formatted exception info if there is any
+        if record_context.get('exc_text', None):
+            s = s + self._format_exception(record_context)
+
+            # 'logging' Formatter() nullifies record.exc_text after it is rendered
+            # so duplicate here
+            record.exc_text = None
+        return s
+
+    # Note that self._format here is more or less the same as py3's Formatter.formatMessage()
+    # and self.color_fmt is similar to py3's Formatter._style, but neither are used here
+    # for py2 compat.
+    def _format(self, record, record_context):
+
+        # record.message = record.getMessage()
+
+        # s = self.color_fmt % record.__dict__
+        s = self.color_fmt % record_context
         return s

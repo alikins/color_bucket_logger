@@ -75,12 +75,19 @@ def setup_logger(color_groups=None, fmt=None):
 
 def test_get_name_color():
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                              fmt='%(levelname)s %(name)s %(message)s')
-    logger.debug('foooooooo')
+                                              fmt='levelname=%(levelname)s name=%(name)s message=%(message)s')
+    logger.debug('foo%s', 'blip')
 
     for record in handler.record_buf:
-        print(record.__dict__)
-        assert hasattr(record, '_cdl_name')
+        # The _cdl_* attrs should NOT be set on the record now
+        assert not hasattr(record, '_cdl_name')
+
+    for logged_item in handler.buf:
+        # the expected rendered output include term escape codes
+        expected_levelname = 'levelname=\x1b[38;5;97mDEBUG\x1b[38;5;97m'
+        expected_message = 'message=\x1b[38;5;97mfooblip\x1b[38;5;97m\x1b[0m'
+        assert expected_levelname in logged_item
+        assert expected_message in logged_item
 
 
 def test_stuff():
