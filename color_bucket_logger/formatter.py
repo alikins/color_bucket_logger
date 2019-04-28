@@ -105,19 +105,6 @@ def add_default_record_attrs(record, attr_list):
     return record
 
 
-def _apply_colors_to_record(record, colors):
-    '''modify LogRecord in place (as side effect) adding _cdl_* attributes'''
-    # apply the colors
-    for cdl_name, color_value in colors.items():
-
-        # FIXME: revisit setting default idx to a color based on string
-        # if cdl_idx == self.DEFAULT_COLOR_IDX:
-        #    cdl_idx = _color_by_attr_index
-
-        # FIXME:
-        setattr(record, cdl_name, color_value)
-
-
 class ColorFormatter(logging.Formatter):
     # A little weird...
     @property
@@ -155,9 +142,9 @@ class ColorFormatter(logging.Formatter):
         return buf
 
     def _pre_format(self, record):
-        '''render time and exception info to be a string
+        '''Render time and exception info to be a string
 
-        Modifies record by side effect.'''
+        Modifies record by side effect, updating asctime, exc_text attrs.'''
         # import pprint
         # pprint.pprint(record.__dict__)
         if self.usesTime():
@@ -189,8 +176,6 @@ class ColorFormatter(logging.Formatter):
         # a dict key'ed by a string of form '%_cdl_' + the log record attr name
         colors = self.color_mapper.get_colors_for_record(record)
 
-        # _apply_colors_to_record(record, colors)
-
         # Create a context dict of the log records attributes (the __dict__ of
         # the LogRecord() plus all of the color map items from the 'colors' dict.
         # This avoids having to modify the LogRecord() instance in place.
@@ -215,9 +200,4 @@ class ColorFormatter(logging.Formatter):
     # and self.color_fmt is similar to py3's Formatter._style, but neither are used here
     # for py2 compat.
     def _format(self, record_context):
-
-        # record.message = record.getMessage()
-
-        # s = self.color_fmt % record.__dict__
-        s = self.color_fmt % record_context
-        return s
+        return self.color_fmt % record_context
