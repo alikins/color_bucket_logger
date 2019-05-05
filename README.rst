@@ -61,6 +61,37 @@ Basic config colorized by logger name::
     # Note 'handlers' arg is py3 only
     logging.basicConfig(level=logging.DEBUG, handlers=[handler])
 
+Color Group Examples
+--------------------
+
+Example uses of color_groups::
+
+    # color almost everything by logger name
+    color_groups = [('name', ['filename', 'module', 'lineno', 'funcName', 'pathname'])]
+
+    color_groups = [
+        ('process', ['default', 'message']),
+        ('process', ['processName', 'process']),
+        ('thread', ['default', 'threadName', 'message', 'unset', 'processName', 'exc_text']),
+        ('thread', ['threadName', 'thread']),
+        ]
+
+    # color logger name, filename and lineno same as the funcName
+    color_groups = [('funcName', ['default', 'message', 'unset', 'name', 'filename', 'lineno'])]
+
+    # color message same as debug level
+    color_groups = [('levelname', ['levelname', 'levelno'])]
+
+    # color funcName, filename, lineno same as logger name
+    color_groups = [('name', ['funcName', 'filename', 'lineno'])]
+
+    # color groups can be based on non standard 'extra' attributes or log record
+    # attibutes created from filters. In this example, a 'task' attributes.
+    color_groups = [('task', ['task_uuid', 'task'])]
+
+    # color default, msg and playbook/play/task by the play
+    color_groups = [('play', ['default','message', 'unset', 'play', 'task'])]
+
 License
 -------
 
