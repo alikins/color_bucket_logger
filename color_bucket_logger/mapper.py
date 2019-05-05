@@ -39,7 +39,7 @@ class BaseColorMapper(object):
 
         self.group_by.extend(self.color_groups)
 
-        self._format_attrs = format_attrs
+        # self._format_attrs = format_attrs
 
         self.auto_color = auto_color
         # import pprint

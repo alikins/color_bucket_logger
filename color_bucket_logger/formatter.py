@@ -172,7 +172,7 @@ class ColorFormatter(logging.Formatter):
 
         # Figure out what each log records color will be and return
         # a dict key'ed by a string of form '%_cdl_' + the log record attr name
-        colors = self.color_mapper.get_colors_for_record(record)
+        colors = self.color_mapper.get_colors_for_record(record, self._format_attrs)
 
         # Create a context dict of the log records attributes (the __dict__ of
         # the LogRecord() plus all of the color map items from the 'colors' dict.
@@ -199,3 +199,20 @@ class ColorFormatter(logging.Formatter):
     # for py2 compat.
     def _format(self, record_context):
         return self.color_fmt % record_context
+
+class TermFormatter(ColorFormatter):
+    def __init__(self, fmt=None, default_color_by_attr=None,
+                 color_groups=None, auto_color=False, datefmt=None,
+                 color_mapper=None):
+
+        super(TermFormatter, self).__init__(fmt=fmt,
+                                            default_color_by_attr=default_color_by_attr,
+                                            color_groups=color_groups,
+                                            auto_color=auto_color,
+                                            datefmt=datefmt)
+
+        self.color_mapper = term_mapper.TermColorMapper(fmt=fmt,
+                                                        default_color_by_attr=default_color_by_attr,
+                                                        color_groups=color_groups,
+                                                        format_attrs=self._format_attrs,
+                                                        auto_color=auto_color)

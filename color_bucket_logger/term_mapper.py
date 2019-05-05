@@ -138,7 +138,7 @@ class TermColorMapper(mapper.BaseColorMapper):
     #       - also allows format to just expand a '%(threadName)s' in fmt string to '%(theadNameColor)s%(threadName)s%(reset)s' before regular formatter
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
     # def add_color_attrs_to_record(self, record):
-    def get_colors_for_record(self, record):
+    def get_colors_for_record(self, record, format_attrs):
         '''For a log record, compute color for each field and return a color dict'''
 
         _default_color_index = self.DEFAULT_COLOR_IDX
@@ -156,13 +156,13 @@ class TermColorMapper(mapper.BaseColorMapper):
         # thread, threadname, process, processname
 
         # populate the record with values for any _cdl_* attrs we will use
-        # could be self._format_attrs (actually used in format string) + any referenced as color_group keys
+        # could be format_attrs (actually used in format string) + any referenced as color_group keys
         group_by_attrs = [y[0] for y in self.group_by]
 
-        format_attrs = [z[1] for z in self._format_attrs] + ['exc_text']
+        record_format_attrs = [z[1] for z in format_attrs] + ['exc_text']
 
         # attrs_needing_default = self.default_record_attrs + self.custom_record_attrs
-        attrs_needed = group_by_attrs + format_attrs
+        attrs_needed = group_by_attrs + record_format_attrs
         for attr_needed in attrs_needed:
             cdl_name = '_cdl_%s' % attr_needed
             # setattr(record, cdl_name, self.default_color)

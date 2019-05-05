@@ -3,6 +3,7 @@
 import logging
 
 import random
+import signal
 import string
 import sys
 import threading
@@ -214,6 +215,10 @@ def main(args):
         t.join()
     return 0
 
+def sigint_handler(signal, frame):
+    sys.exit(0)
 
 if __name__ == '__main__':
+    # signal.signal(signal.SIGINT, sigint_handler)
+
     sys.exit(main(sys.argv[:]))

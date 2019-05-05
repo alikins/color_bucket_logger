@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `color_bucket_logger` package."""
+import logging
+import logging.config
+import sys
 
+import logging_tree
 import pytest
 
-import logging
 try:
     from logging import NullHandler
 except ImportError:
@@ -15,6 +18,34 @@ except ImportError:
             pass
 
 import color_bucket_logger
+
+min_log_config = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+    },
+    'filters': {},
+    'handlers': {
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+        'blip':
+            {'level': logging.DEBUG},
+    }
+}
+
+def delete_log_tree(log_node):
+    for child in log_node[2]:
+        delete_log_tree(child)
+    log_node[1].handlers = []
+
+def teardown_config():
+    logging.getLogger('tests.test_color_debug').handlers = []
+    lt = logging_tree.tree()
+    delete_log_tree(lt)
+    logging.config.dictConfig(min_log_config)
 
 
 class BufHandler(logging.Handler):
@@ -59,13 +90,18 @@ def test_find_format_attrs_precision():
     assert ('%(lineno)d', 'lineno') in res
 
 
-def setup_logger(color_groups=None, fmt=None):
+def setup_logger(color_groups=None, fmt=None, formatter_class=None, auto_color=False):
+    formatter_class = formatter_class or color_bucket_logger.ColorFormatter
     color_groups = color_groups or [('name', ['name', 'levelname'])]
+
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
-    formatter = color_bucket_logger.ColorFormatter(fmt=fmt,
-                                                   default_color_by_attr='name',
-                                                   color_groups=color_groups)
+    formatter = formatter_class(fmt=fmt,
+                                default_color_by_attr='name',
+                                color_groups=color_groups,
+                                auto_color=auto_color)
+
     logger = logging.getLogger(__name__ + '.test_logger')
+    logger.disabled = False
     logger.setLevel(logging.DEBUG)
     handler = BufHandler(level=logging.DEBUG)
     handler.setFormatter(formatter)
@@ -89,35 +125,63 @@ def test_get_name_color():
         assert expected_levelname in logged_item
         assert expected_message in logged_item
 
+@pytest.fixture(params=[color_bucket_logger.ColorFormatter,
+                        color_bucket_logger.TermFormatter])
+def formatter_class(request):
+    # _config()
+    return request.param
 
-def test_stuff():
-    fmt_string = '%(levelname)s %(created)s %(filename)s %(funcName)s '
-    '%(levelno)s %(module)s %(pathname)s %(process)d '
-    '%(thread)d %(name)s %(message)s'
+def test_stuff(formatter_class):
+    print('premin')
+    teardown_config()
+    print('postmin')
+    logging_tree.printout()
+
+    fmt_string = 'logger %(levelname)s %(created)s %(filename)s %(funcName)s ' + \
+        '%(levelno)s %(module)s %(pathname)s %(process)d ' + \
+        '%(thread)d %(name)s %(message)s'
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                              fmt=fmt_string)
+                                              fmt=fmt_string,
+                                              auto_color=True,
+                                              formatter_class=formatter_class)
 
-    sfmt = '%(levelname)s %(filename)s %(process)d'
-    '%(thread)d %(name)s %(message)s'
-    slogger, shandler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
-                                                fmt=sfmt)
+    sfmt = 'slogger %(levelname)s %(filename)s %(process)d' + \
+        '%(thread)d %(name)s %(message)s'
+    slogger, shandler, formatter = setup_logger(color_groups=[('name', ['name', 'message']),
+                                                              ('thread', ['process', 'filename'])],
+                                                fmt=sfmt,
+                                                auto_color=False,
+                                                formatter_class=formatter_class)
+
+    print('post setup')
+    logging_tree.printout()
 
     logger.debug('D: %s', '_debug')
     logger.info('I: %s', '_info')
     logger.warning('W: %s', '_warn')
+
     slogger.debug('foo1')
     slogger.info('foo2')
     slogger.error('foo4')
 
-    for record in handler.record_buf:
-        print(record.message)
+#    for record in handler.record_buf:
+#        print(record.message)
 
+    for logged_item in handler.buf:
+        sys.stdout.write('%s\n' % logged_item)
 
-def test_init(response):
+    for logged_item in shandler.buf:
+        sys.stdout.write('%s\n' % logged_item)
+
+def test_color_formatter_empty_init(response):
     """Just init the class"""
     formatter = color_bucket_logger.ColorFormatter()
     assert isinstance(formatter, color_bucket_logger.ColorFormatter)
 
+def test_term_formatter_empty_init(response):
+    """Just init the class"""
+    formatter = color_bucket_logger.TermFormatter()
+    assert isinstance(formatter, color_bucket_logger.TermFormatter)
 
 def test_null_handler(response):
     nh = NullHandler()
