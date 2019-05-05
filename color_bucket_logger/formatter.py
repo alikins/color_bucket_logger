@@ -44,15 +44,13 @@ def context_color_format_string(format_string, format_attrs):
     becomes
 
     '%(_cdl_process)s%(process)d%(_cdl_reset)s %(_cdl_threadName)%(threadName)s%(_cdl_reset)s - %(msg)'
-
-    Note that adding those log record attributes is left to... <FIXME>.
     '''
+
     format_attrs = find_format_attrs(format_string)
-    # TODO: pass in a list of record/logFormatter attributes to be wrapped for colorization
 
     color_attrs_string = '|'.join([x[1] for x in format_attrs])
 
-    # This looks for log format strings like '%(threadName)s' or '$(process)d, and replaces
+    # This looks for log format strings like '%(threadName)s' or '%(process)d, and replaces
     # the format specifier with a version wrapped with log record color attributes.
     #
     # For ex, '%(threadName)s'  -> %(_cdl_threadName)s%(threadName)s%(cdl_reset)

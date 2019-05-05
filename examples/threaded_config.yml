@@ -13,7 +13,7 @@ formatters:
     # Automatically choose color buckets for other fields based on their values.
     # Each log record field will colorize itself, except for the color buckets grouped
     # together via color_groups.
-    auto_color: true
+    auto_color: false
 
     # If there are fields that should share the same color bucket, 'color_groups'
     # defines which field's color is used. Each entry is a list or tuple, the first
@@ -25,7 +25,7 @@ formatters:
     color_groups:
         # - ['process', ['processName']]
       - ['levelname', ['levelname']]
-      - ['funcName', ['lineno']]
+        # - ['funcName', ['lineno']]
       - ['thread', ['threadName', 'process', 'processName']]
 handlers:
   console:
