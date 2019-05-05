@@ -72,9 +72,6 @@ def gen_log_events(thread_msg=None):
 
 
 def run():
-    import logging_tree
-    logging_tree.printout()
-
     gen_log_events()
 
 
