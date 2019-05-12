@@ -201,6 +201,20 @@ def test_exception_formatter():
         assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
         # assert expected_message in logged_item
 
+def test_created_time():
+    # teardown_config()
+    logger, handler, formatter = setup_logger(
+                                              auto_color=True,
+                                              fmt='created=%(created)f rel=%(relativeCreated)d levelname=%(levelname)s name=%(name)s message=%(message)s')
+
+    logger.debug('test created time')
+    logger.debug('a little bit latter')
+
+    for logged_item in handler.buf:
+        testlog.debug('logged_item: %s', logged_item)
+        assert 'created=' in logged_item
+        assert 'rel='in logged_item
+
 def test_extra_attrs():
     logger, handler, formatter = setup_logger(
                                               auto_color=True,
