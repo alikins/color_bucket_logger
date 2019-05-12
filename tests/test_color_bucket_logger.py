@@ -40,16 +40,19 @@ min_log_config = {
 testlog = logging.getLogger(__name__)
 testlog.debug('testlog ping')
 
+
 def delete_log_tree(log_node):
     for child in log_node[2]:
         delete_log_tree(child)
     log_node[1].handlers = []
 
+
 def teardown_config():
-    logging.getLogger('tests.test_color_debug').handlers = []
+    logging.getLogger('tests.test_color_bucket_logger').handlers = []
     lt = logging_tree.tree()
     delete_log_tree(lt)
     logging.config.dictConfig(min_log_config)
+
 
 def setup_logger(color_groups=None, fmt=None, formatter_class=None, auto_color=False):
     formatter_class = formatter_class or color_bucket_logger.ColorFormatter
@@ -83,7 +86,7 @@ class BufHandler(logging.Handler):
             self.record_buf.append(record)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception:
             self.handleError(record)
 
 
@@ -129,6 +132,7 @@ def test_get_name_color():
         assert expected_levelname in logged_item
         assert expected_message in logged_item
 
+
 def test_get_thread_color():
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'message']),
                                                             ('thread', ['thread']),
@@ -162,15 +166,17 @@ def test_get_thread_color():
     for logged_item in handler.buf:
         # the expected rendered output include term escape codes
         # expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
-        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
+        # expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
         testlog.debug('logged_item: %s', logged_item)
         # assert expected_levelname in logged_item
         # assert 'name=tests.test_color_bucket_logger.test_logger' in logged_item
         assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
         # assert expected_message in logged_item
 
+
 def break_stuff():
     37 / 0
+
 
 def test_exception_formatter():
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'message']),
@@ -192,14 +198,9 @@ def test_exception_formatter():
         assert not hasattr(record, '_cdl_name')
 
     for logged_item in handler.buf:
-        # the expected rendered output include term escape codes
-        # expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
-        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
         testlog.debug('logged_item: %s', logged_item)
-        # assert expected_levelname in logged_item
-        # assert 'name=tests.test_color_bucket_logger.test_logger' in logged_item
         assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
-        # assert expected_message in logged_item
+
 
 def test_created_time():
     # teardown_config()
@@ -215,12 +216,13 @@ def test_created_time():
         assert 'created=' in logged_item
         assert 'rel='in logged_item
 
+
 def test_extra_attrs():
     logger, handler, formatter = setup_logger(
                                               auto_color=True,
                                               fmt='levelname=%(levelname)s name=%(name)s an_extra=%(an_extra)s message=%(message)s')
 
-    logger.debug('test non default args', extra={'an_extra':'eggggstra'})
+    logger.debug('test non default args', extra={'an_extra': 'eggggstra'})
 
     for logged_item in handler.buf:
         testlog.debug('logged_item: %s', logged_item)
@@ -232,6 +234,7 @@ def test_extra_attrs():
 def formatter_class(request):
     # _config()
     return request.param
+
 
 def test_stuff(formatter_class):
     print('premin')
@@ -275,15 +278,18 @@ def test_stuff(formatter_class):
     for logged_item in shandler.buf:
         sys.stdout.write('%s\n' % logged_item)
 
+
 def test_color_formatter_empty_init(response):
     """Just init the class"""
     formatter = color_bucket_logger.ColorFormatter()
     assert isinstance(formatter, color_bucket_logger.ColorFormatter)
 
+
 def test_term_formatter_empty_init(response):
     """Just init the class"""
     formatter = color_bucket_logger.TermFormatter()
     assert isinstance(formatter, color_bucket_logger.TermFormatter)
+
 
 def test_null_handler(response):
     nh = NullHandler()
