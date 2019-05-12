@@ -34,11 +34,15 @@ min_log_config = {
     'loggers': {
         'blip':
             {'level': logging.DEBUG},
+        'testlog':{
+            'level': logging.DEBUG
+        },
     }
 }
 
-testlog = logging.getLogger(__name__)
+testlog = logging.getLogger('testlog')
 testlog.debug('testlog ping')
+logging_tree.printout()
 
 
 def delete_log_tree(log_node):
@@ -73,6 +77,26 @@ def setup_logger(color_groups=None, fmt=None,
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger, handler, formatter
+
+@pytest.fixture
+def logger_teardown():
+    testlog.debug('empty first part')
+    yield
+    # teardown
+    print('tttttttttt')
+    testlog.debug('tearing down the config')
+    teardown_config()
+    testlog.debug('tore down the config')
+    logging_tree.printout()
+
+
+def test_ls(logger_teardown):
+    logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
+                                              fmt='levelname=%(levelname)s name=%(name)s message=%(message)s')
+    logger.debug('test_lsfoo%s', 'guraf blip')
+    logging_tree.printout()
+    logger.warning('WWWWWWWWWWWWWWWWWWW %s', 'cheese')
+    testlog.debug('pre teardown?')
 
 
 class BufHandler(logging.Handler):
