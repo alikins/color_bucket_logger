@@ -5,6 +5,7 @@
 import logging
 import logging.config
 import sys
+import threading
 
 import logging_tree
 import pytest
@@ -127,6 +128,90 @@ def test_get_name_color():
         testlog.debug('logged_item: %s', logged_item)
         assert expected_levelname in logged_item
         assert expected_message in logged_item
+
+def test_get_thread_color():
+    logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'message']),
+                                                            ('thread', ['thread']),
+                                                            ('levelname', ['levelname', 'levelno'])],
+                                              auto_color=True,
+                                              fmt='levelname=%(levelname)s tid=%(thread)d tname=%(threadName)s pid=%(process)d proccess=%(processName)s name=%(name)s message=%(message)s')
+
+    logger.debug('foo%s', 'blip')
+
+    def log_from_thread(msg):
+        logger.debug('thread debug: %s', msg)
+        logger.info('thread info: %s', msg)
+        logger.warning('thread warning: %s', msg)
+
+    # log some stuff from a thread
+    some_thread = threading.Thread(target=log_from_thread,
+                            args=('msg from some thread #%s' % '1SomeThread',))
+    some_thread.daemon = True
+    some_thread.start()
+
+    logger.debug('from main sssssssss')
+
+    some_thread.join()
+
+    logger.debug('after thread join')
+
+    for record in handler.record_buf:
+        # The _cdl_* attrs should NOT be set on the record now
+        assert not hasattr(record, '_cdl_name')
+
+    for logged_item in handler.buf:
+        # the expected rendered output include term escape codes
+        # expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
+        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
+        testlog.debug('logged_item: %s', logged_item)
+        # assert expected_levelname in logged_item
+        # assert 'name=tests.test_color_bucket_logger.test_logger' in logged_item
+        assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
+        # assert expected_message in logged_item
+
+def break_stuff():
+    37 / 0
+
+def test_exception_formatter():
+    logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'message']),
+                                                            ('thread', ['thread']),
+                                                            ('levelname', ['levelname', 'levelno'])],
+                                              auto_color=True,
+                                              fmt='levelname=%(levelname)s tid=%(thread)d tname=%(threadName)s pid=%(process)d proccess=%(processName)s name=%(name)s message=%(message)s')
+
+    logger.debug('test_exception_formatter')
+
+    try:
+        break_stuff()
+    except ZeroDivisionError as exc:
+        logger.error('Hit an exception, 37/0 isnt ok I suppose')
+        logger.exception(exc)
+
+    for record in handler.record_buf:
+        # The _cdl_* attrs should NOT be set on the record now
+        assert not hasattr(record, '_cdl_name')
+
+    for logged_item in handler.buf:
+        # the expected rendered output include term escape codes
+        # expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
+        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
+        testlog.debug('logged_item: %s', logged_item)
+        # assert expected_levelname in logged_item
+        # assert 'name=tests.test_color_bucket_logger.test_logger' in logged_item
+        assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
+        # assert expected_message in logged_item
+
+def test_extra_attrs():
+    logger, handler, formatter = setup_logger(
+                                              auto_color=True,
+                                              fmt='levelname=%(levelname)s name=%(name)s an_extra=%(an_extra)s message=%(message)s')
+
+    logger.debug('test non default args', extra={'an_extra':'eggggstra'})
+
+    for logged_item in handler.buf:
+        testlog.debug('logged_item: %s', logged_item)
+        assert 'an_extra=' in logged_item
+        assert 'eggggstra'in logged_item
 
 @pytest.fixture(params=[color_bucket_logger.ColorFormatter,
                         color_bucket_logger.TermFormatter])
