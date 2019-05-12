@@ -50,6 +50,24 @@ def teardown_config():
     delete_log_tree(lt)
     logging.config.dictConfig(min_log_config)
 
+def setup_logger(color_groups=None, fmt=None, formatter_class=None, auto_color=False):
+    formatter_class = formatter_class or color_bucket_logger.ColorFormatter
+    color_groups = color_groups or [('name', ['name', 'levelname'])]
+
+    fmt = fmt or '%(levelname)s %(name)s %(message)s'
+    formatter = formatter_class(fmt=fmt,
+                                default_color_by_attr='name',
+                                color_groups=color_groups,
+                                auto_color=auto_color)
+
+    logger = logging.getLogger(__name__ + '.test_logger')
+    logger.disabled = False
+    logger.setLevel(logging.DEBUG)
+    handler = BufHandler(level=logging.DEBUG)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger, handler, formatter
+
 
 class BufHandler(logging.Handler):
     def __init__(self, level=logging.NOTSET):
@@ -91,25 +109,6 @@ def test_find_format_attrs_precision():
     assert ('%(process)-5d', 'process') in res
     assert ('%(threadName)-2s', 'threadName') in res
     assert ('%(lineno)d', 'lineno') in res
-
-
-def setup_logger(color_groups=None, fmt=None, formatter_class=None, auto_color=False):
-    formatter_class = formatter_class or color_bucket_logger.ColorFormatter
-    color_groups = color_groups or [('name', ['name', 'levelname'])]
-
-    fmt = fmt or '%(levelname)s %(name)s %(message)s'
-    formatter = formatter_class(fmt=fmt,
-                                default_color_by_attr='name',
-                                color_groups=color_groups,
-                                auto_color=auto_color)
-
-    logger = logging.getLogger(__name__ + '.test_logger')
-    logger.disabled = False
-    logger.setLevel(logging.DEBUG)
-    handler = BufHandler(level=logging.DEBUG)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger, handler, formatter
 
 
 def test_get_name_color():
