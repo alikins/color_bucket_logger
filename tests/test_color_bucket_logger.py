@@ -36,6 +36,9 @@ min_log_config = {
     }
 }
 
+testlog = logging.getLogger(__name__)
+testlog.debug('testlog ping')
+
 def delete_log_tree(log_node):
     for child in log_node[2]:
         delete_log_tree(child)
@@ -120,8 +123,9 @@ def test_get_name_color():
 
     for logged_item in handler.buf:
         # the expected rendered output include term escape codes
-        expected_levelname = 'levelname=\x1b[38;5;97mDEBUG\x1b[38;5;97m'
-        expected_message = 'message=\x1b[38;5;97mfooblip\x1b[38;5;97m\x1b[0m'
+        expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
+        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
+        testlog.debug('logged_item: %s', logged_item)
         assert expected_levelname in logged_item
         assert expected_message in logged_item
 
