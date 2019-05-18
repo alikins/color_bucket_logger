@@ -44,6 +44,10 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache/
+
+# local tool configs
+.ackrc
 
 # Translations
 *.mo
