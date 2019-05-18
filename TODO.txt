@@ -1,0 +1,16 @@
+- Documentation
+ - examples/screenshots for readme
+- Some preset configs for things like:
+    - main color per thread
+    - main color per process
+    - main color per threadName
+    - main color per processName
+    - main color per logger name
+    - main color per logging level
+    - main color per module or file
+    - main color per log 'msg'
+- try to separate color mapper logic a bit more
+  - calculation of record attr hashes
+  - mapping of hash value to color
+  - mapping of color index to color rendering (ie, term escape codes, css class, etc)
+-
