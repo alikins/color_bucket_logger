@@ -126,8 +126,8 @@ def test_get_name_color():
 
     for logged_item in handler.buf:
         # the expected rendered output include term escape codes
-        expected_levelname = 'levelname=\x1b[38;5;99mDEBUG\x1b[38;5;99m'
-        expected_message = 'message=\x1b[38;5;99mfooblip\x1b[38;5;99m\x1b[0m'
+        expected_levelname = 'levelname=\x1b[38;5;146mDEBUG\x1b[38;5;146m'
+        expected_message = 'message=\x1b[38;5;146mfooblip\x1b[38;5;146m\x1b[0m'
         testlog.debug('logged_item: %s', logged_item)
         assert expected_levelname in logged_item
         assert expected_message in logged_item
@@ -170,7 +170,7 @@ def test_get_thread_color():
         testlog.debug('logged_item: %s', logged_item)
         # assert expected_levelname in logged_item
         # assert 'name=tests.test_color_bucket_logger.test_logger' in logged_item
-        assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
+        assert '=\x1b[38;5;146mtests.test_color_bucket_logger.test_logger' in logged_item
         # assert expected_message in logged_item
 
 
@@ -199,7 +199,7 @@ def test_exception_formatter():
 
     for logged_item in handler.buf:
         testlog.debug('logged_item: %s', logged_item)
-        assert '=\x1b[38;5;99mtests.test_color_bucket_logger.test_logger' in logged_item
+        assert '=\x1b[38;5;146mtests.test_color_bucket_logger.test_logger' in logged_item
 
 
 def test_created_time():

@@ -14,7 +14,7 @@ class TermColorMapper(mapper.BaseColorMapper):
                     # bold red?
                     'CRITICAL': term_colors.RED}
 
-    NUMBER_OF_THREAD_COLORS = len(term_colors.THREAD_COLORS)
+    NUMBER_OF_COLORS = term_colors.NUMBER_OF_ALL_COLORS
 
     # TODO: tie tid/threadName and process/processName together so they start same color
     #       so MainProcess, the first pid/processName are same, and maybe MainThread//first tid
@@ -42,7 +42,7 @@ class TermColorMapper(mapper.BaseColorMapper):
         """
 
         # 220 is useable 256 color term color (forget where that comes from? some min delta-e division of 8x8x8 rgb colorspace?)
-        thread_mod = threadid % self.NUMBER_OF_THREAD_COLORS
+        thread_mod = threadid % self.NUMBER_OF_COLORS
         return thread_mod + term_colors.RGB_COLOR_OFFSET
 
     # TODO: This could special case 'MainThread'/'MainProcess' to pick a good predictable color
@@ -54,7 +54,7 @@ class TermColorMapper(mapper.BaseColorMapper):
         name = '%s%s' % (name, perturb)
         # name_hash = hash(name)
         name_hash = sum([ord(x) for x in name])
-        name_mod = name_hash % self.NUMBER_OF_THREAD_COLORS
+        name_mod = name_hash % self.NUMBER_OF_COLORS
         return name_mod + term_colors.RGB_COLOR_OFFSET
 
     def get_level_color(self, levelname, levelno):
