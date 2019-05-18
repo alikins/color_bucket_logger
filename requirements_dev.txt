@@ -6,5 +6,6 @@ flake8
 logging_tree
 pytest
 pytest-runner
+sphinx_rtd_theme
 tox
 wheel

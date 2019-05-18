@@ -1,3 +1,6 @@
+"""The logging Formatters
+"""
+
 import logging
 import re
 
@@ -37,14 +40,16 @@ def find_format_attrs(format_string):
 
 
 def context_color_format_string(format_string, format_attrs):
-    '''For extending a format string for logging.Formatter to include attributes with color info.
+    """For extending a format string for logging.Formatter to include attributes with color info.
 
-    ie, '%(process)d %(threadName)s - %(msg)'
+    ie::
 
-    becomes
+        '%(process)d %(threadName)s - %(msg)'
 
-    '%(_cdl_process)s%(process)d%(_cdl_reset)s %(_cdl_threadName)%(threadName)s%(_cdl_reset)s - %(msg)'
-    '''
+    becomes::
+
+        '%(_cdl_process)s%(process)d%(_cdl_reset)s %(_cdl_threadName)%(threadName)s%(_cdl_reset)s - %(msg)'
+    """
 
     format_attrs = find_format_attrs(format_string)
 
@@ -97,6 +102,11 @@ def context_color_format_string(format_string, format_attrs):
 
 
 def add_default_record_attrs(record, attr_list):
+    """Add default values to a log record for each attr in attr_list
+
+    Note: This modifies the logging.LogRecord instance in place, so
+    this method has side effects."""
+
     for attr in attr_list:
         if not hasattr(record, attr):
             setattr(record, attr, None)
@@ -104,6 +114,8 @@ def add_default_record_attrs(record, attr_list):
 
 
 class ColorFormatter(logging.Formatter):
+    """Base color bucket formatter"""
+
     # A little weird...
     @property
     def color_fmt(self):
@@ -200,7 +212,38 @@ class ColorFormatter(logging.Formatter):
     def _format(self, record_context):
         return self.color_fmt % record_context
 
+
 class TermFormatter(ColorFormatter):
+    """Formatter for terminals that colorizes attributes based on their value
+
+    Parameters
+    ----------
+    fmt : str
+        A logging.Formatter style log format string
+    default_color_by_attr : str, optional
+        The name of the log record attribute whose color will
+        used by default for other records if they do not have
+        a color set (by either 'auto_color' or by 'color_groups')
+    color_groups : iterable, optional
+        Define when a attribute should use the same color as another attribute.
+
+        For example, to make the 'processName' and 'message' attributes
+        use the same color as 'process'.
+
+        color_groups is a list of tuples. The first element of each
+        tuple is the "leader" attribute, and the second element is
+        a list of "follower" attributes.
+
+        For the 'process' and 'processName' example::
+
+            color_groups=[('process', ['processName', 'message']]
+    auto_color : boolean, optional
+        If true, automatically calculate and use colors for each attribute.
+        Defaults to False
+    datefmt : str, optional
+        Date format string as used by logging.Formatter
+
+    """
     def __init__(self, fmt=None, default_color_by_attr=None,
                  color_groups=None, auto_color=False, datefmt=None,
                  color_mapper=None):
