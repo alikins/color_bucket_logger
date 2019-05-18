@@ -1,59 +1,20 @@
 from . import mapper
+from . import term_colors
 
 
 class TermColorMapper(mapper.BaseColorMapper):
-    # hacky ansi color stuff
-    RESET_SEQ = "\033[0m"
-    COLOR_SEQ = "\033[1;%dm"
-    BOLD_SEQ = "\033[1m"
-
-    NUMBER_OF_BASE_COLORS = 8
-    # NUMBER_OF_THREAD_COLORS = 216
-    # the xterm256 colors 0-8 and 8-16 are normal and bright term colors, 16-231 is from a 6x6x6 rgb cube
-    # 232-255 are the grays (white to gray to black)
-    RGB_COLOR_OFFSET = 16 + 2
-    # +2 is to skip black and very dark blue as valid color.
-    # FIXME: needs to learn to support dark/light themes
-    START_OF_THREAD_COLORS = RGB_COLOR_OFFSET
-    END_OF_THREAD_COLORS = 231
-    NUMBER_OF_THREAD_COLORS = END_OF_THREAD_COLORS - RGB_COLOR_OFFSET
-
-    BASE_COLORS = dict((color_number, color_seq) for
-                       (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
-    # \ x 1 b [ 38 ; 5; 231m
-    THREAD_COLORS = dict((color_number, color_seq) for
-                         (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
-    ALL_COLORS = {}
-    ALL_COLORS.update(BASE_COLORS)
-    ALL_COLORS.update(THREAD_COLORS)
-
-    # import sys
-    # for x in ALL_COLORS:
-    #    sys.stdout.write("%s: %sX - X - X - X - X - X%s\n" % (x, ALL_COLORS[x], RESET_SEQ))
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = BASE_COLORS.keys()
-
-    DEFAULT_COLOR_IDX = 257
-    RESET_SEQ_IDX = 256
-    ALL_COLORS[RESET_SEQ_IDX] = RESET_SEQ
-
-    DEFAULT_COLOR = WHITE
-    ALL_COLORS[DEFAULT_COLOR_IDX] = ALL_COLORS[DEFAULT_COLOR]
-
     # FIXME: use logging.DEBUG etc enums
-    LEVEL_COLORS = {'TRACE': BLUE,
-                    'SUBDEBUG': BLUE,
-                    'DEBUG': BLUE,
-                    # levels.VV: BASE_COLORS[BLUE],
-                    # levels.VVV: BASE_COLORS[BLUE],
-                    # levels.VVVV: BASE_COLORS[BLUE],
-                    # levels.VVVVV: BASE_COLORS[BLUE],
-                    'INFO': GREEN,
-                    # levels.V: BASE_COLORS[GREEN],
-                    'SUBWARNING': YELLOW,
-                    'WARNING': YELLOW,
-                    'ERROR': RED,
+    LEVEL_COLORS = {'TRACE': term_colors.BLUE,
+                    'SUBDEBUG': term_colors.BLUE,
+                    'DEBUG': term_colors.BLUE,
+                    'INFO': term_colors.GREEN,
+                    'SUBWARNING': term_colors.YELLOW,
+                    'WARNING': term_colors.YELLOW,
+                    'ERROR': term_colors.RED,
                     # bold red?
-                    'CRITICAL': RED}
+                    'CRITICAL': term_colors.RED}
+
+    NUMBER_OF_THREAD_COLORS = len(term_colors.THREAD_COLORS)
 
     # TODO: tie tid/threadName and process/processName together so they start same color
     #       so MainProcess, the first pid/processName are same, and maybe MainThread//first tid
@@ -82,9 +43,7 @@ class TermColorMapper(mapper.BaseColorMapper):
 
         # 220 is useable 256 color term color (forget where that comes from? some min delta-e division of 8x8x8 rgb colorspace?)
         thread_mod = threadid % self.NUMBER_OF_THREAD_COLORS
-        # print threadid, thread_mod % 220
-        # return self.THREAD_COLORS[thread_mod]
-        return thread_mod + self.RGB_COLOR_OFFSET
+        return thread_mod + term_colors.RGB_COLOR_OFFSET
 
     # TODO: This could special case 'MainThread'/'MainProcess' to pick a good predictable color
     def get_name_color(self, name, perturb=None):
@@ -96,8 +55,7 @@ class TermColorMapper(mapper.BaseColorMapper):
         # name_hash = hash(name)
         name_hash = sum([ord(x) for x in name])
         name_mod = name_hash % self.NUMBER_OF_THREAD_COLORS
-        # return self.THREAD_COLORS[name_mod]
-        return name_mod + self.RGB_COLOR_OFFSET
+        return name_mod + term_colors.RGB_COLOR_OFFSET
 
     def get_level_color(self, levelname, levelno):
         level_color = self.LEVEL_COLORS.get(levelname, None)
@@ -165,7 +123,7 @@ class TermColorMapper(mapper.BaseColorMapper):
     def get_colors_for_record(self, record, format_attrs):
         """For a :py:class:`logging.LogRecord` record, compute color for each field and return a color dict"""
 
-        _default_color_index = self.DEFAULT_COLOR_IDX
+        _default_color_index = term_colors.DEFAULT_COLOR_IDX
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
         # record._cdl_reset = self.RESET_SEQ
         # record._cdl_default = self.default_color
@@ -174,7 +132,7 @@ class TermColorMapper(mapper.BaseColorMapper):
 
         colors = {'_cdl_default': _default_color_index,
                   '_cdl_unset': _default_color_index,
-                  '_cdl_reset': self.RESET_SEQ_IDX}
+                  '_cdl_reset': term_colors.RESET_SEQ_IDX}
 
         # custom_mapppers = levelno, levelno
         # thread, threadname, process, processname
@@ -275,7 +233,7 @@ class TermColorMapper(mapper.BaseColorMapper):
         name_to_color_map = {}
         for cdl_name, cdl_idx in colors.items():
             # FIXME: revisit setting default idx to a color based on string
-            if cdl_idx == self.DEFAULT_COLOR_IDX:
+            if cdl_idx == term_colors.DEFAULT_COLOR_IDX:
                 cdl_idx = _color_by_attr_index
-            name_to_color_map[cdl_name] = self.ALL_COLORS[cdl_idx]
+            name_to_color_map[cdl_name] = term_colors.ALL_COLORS[cdl_idx]
         return name_to_color_map
