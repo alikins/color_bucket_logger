@@ -67,6 +67,19 @@ class TermColorMapper(mapper.BaseColorMapper):
     # SEEALSO: chromalog module does something similar, may be easiest to extend
     # TODO: this could be own class/methods like ContextColor(log_record) that returns color info
     def get_thread_color(self, threadid):
+        """Calculate the color index for a threadid (tid) number
+
+        Parameters
+        ----------
+        threadid : int
+            The value of the LogRecord.threadid attribute (the tid)
+
+        Returns
+        -------
+        int
+        The color index to use
+        """
+
         # 220 is useable 256 color term color (forget where that comes from? some min delta-e division of 8x8x8 rgb colorspace?)
         thread_mod = threadid % self.NUMBER_OF_THREAD_COLORS
         # print threadid, thread_mod % 220
@@ -93,21 +106,32 @@ class TermColorMapper(mapper.BaseColorMapper):
         return level_color
 
     def get_process_colors(self, record):
-        '''Given process/thread info, return reasonable colors for them.
+        """Given process/thread info, return reasonable colors for them.
 
         Roughly:
 
-            - attempts to get a unique color per processName
-            - attempts to get a unique color per pid
-                - attempt to make those the same for MainProcess
-                - any other processName, the pname color and the pid color cann be different
-            - if threadName is 'MainThread', make tname_color and tid_color match MainProcess pname_color and pid_color
-            - other threadNames get a new color and new tid_color
+            - attempts to get a unique color per 'processName'
+            - attempts to get a unique color per 'process' (pid)
+                - attempt to make those the same for "MainProcess"
+                - for any other 'processName', the pname color and the pid color can be different
+            - if 'threadName' is "MainThread", make tname_color and tid_color match "MainProcess" pname_color and pid_color
+            - other 'threadName' values get a new color and new tid_color
 
-            Existing get_*color_ methods attempt to divy up colors by mod 220 on tid/pid, or mod 220 on hash of thread or pid name
-            NOTE: This doesn't track any state so there is no ordering or prefence to the colors given out.
+        Notes
+        -----
+            This doesn't track any state so there is no ordering or prefence to the colors given out.
 
-        '''
+        Parameters
+        ----------
+        record : :py:class:`logging.LogRecord`
+            The log record to calculate process colors for
+
+        Returns
+        -------
+        int, int, int, int
+            The color indexes for 'processName', 'process', 'threadName', and 'thread'
+        """
+
         pname, pid, tname, tid = record.processName, record.process, record.threadName, record.thread
         # 'pname' is almost always 'MainProcess' which ends up a ugly yellow. perturb is here to change the color
         # that 'MainProcess' ends up to a nicer light green
@@ -139,7 +163,7 @@ class TermColorMapper(mapper.BaseColorMapper):
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
     # def add_color_attrs_to_record(self, record):
     def get_colors_for_record(self, record, format_attrs):
-        '''For a log record, compute color for each field and return a color dict'''
+        """For a :py:class:`logging.LogRecord` record, compute color for each field and return a color dict"""
 
         _default_color_index = self.DEFAULT_COLOR_IDX
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.

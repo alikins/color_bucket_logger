@@ -40,7 +40,7 @@ def find_format_attrs(format_string):
 
 
 def context_color_format_string(format_string, format_attrs):
-    """For extending a format string for logging.Formatter to include attributes with color info.
+    """For extending a format string for :py:class:`logging.Formatter` to include attributes with color info.
 
     ie::
 
@@ -104,7 +104,7 @@ def context_color_format_string(format_string, format_attrs):
 def add_default_record_attrs(record, attr_list):
     """Add default values to a log record for each attr in attr_list
 
-    Note: This modifies the logging.LogRecord instance in place, so
+    Note: This modifies the :obj:`logging.LogRecord` instance in place, so
     this method has side effects."""
 
     for attr in attr_list:
@@ -154,7 +154,7 @@ class ColorFormatter(logging.Formatter):
     def _pre_format(self, record):
         '''Render time and exception info to be a string
 
-        Modifies record by side effect, updating asctime, exc_text attrs.'''
+        Modifies :py:class:`logging.LogRecord` record by side effect, updating asctime, exc_text attrs.'''
         # import pprint
         # pprint.pprint(record.__dict__)
         if self.usesTime():
@@ -219,7 +219,7 @@ class TermFormatter(ColorFormatter):
     Parameters
     ----------
     fmt : str
-        A logging.Formatter style log format string
+        A :py:class:`logging.Formatter` style log format string
     default_color_by_attr : str, optional
         The name of the log record attribute whose color will
         used by default for other records if they do not have
@@ -241,9 +241,9 @@ class TermFormatter(ColorFormatter):
         If true, automatically calculate and use colors for each attribute.
         Defaults to False
     datefmt : str, optional
-        Date format string as used by logging.Formatter
-
+        Date format string as used by :py:class:`logging.Formatter`
     """
+
     def __init__(self, fmt=None, default_color_by_attr=None,
                  color_groups=None, auto_color=False, datefmt=None,
                  color_mapper=None):
