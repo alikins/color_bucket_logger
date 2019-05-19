@@ -126,17 +126,11 @@ class TermColorMapper(mapper.BaseColorMapper):
 
         _default_color_index = term_colors.DEFAULT_COLOR_IDX
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
-        # record._cdl_reset = self.RESET_SEQ
-        # record._cdl_default = self.default_color
-        # record._cdl_unset = self.default_color
-        # self._pre_format(record)
-
         colors = {'_cdl_default': _default_color_index,
                   '_cdl_unset': _default_color_index,
                   '_cdl_reset': term_colors.RESET_SEQ_IDX}
 
         # custom_mapppers = levelno, levelno
-        # thread, threadname, process, processname
 
         # populate the record with values for any _cdl_* attrs we will use
         # could be format_attrs (actually used in format string) + any referenced as color_group keys
@@ -148,7 +142,6 @@ class TermColorMapper(mapper.BaseColorMapper):
         attrs_needed = group_by_attrs + record_format_attrs
         for attr_needed in attrs_needed:
             cdl_name = '_cdl_%s' % attr_needed
-            # setattr(record, cdl_name, self.default_color)
             colors[cdl_name] = _default_color_index
 
         use_level_color = 'levelname' in group_by_attrs or 'levelno' in group_by_attrs
@@ -156,13 +149,11 @@ class TermColorMapper(mapper.BaseColorMapper):
         #       If this wants to use more global data, beware...
         if use_level_color:
             level_color = self.get_level_color(record.levelname, record.levelno)
-            # record._cdl_levelname = level_color
             colors['_cdl_levelname'] = level_color
 
         # set a different color for each logger name. And by default, make filename, funcName, and lineno match.
         use_name_color = 'name' in group_by_attrs
         if use_name_color:
-            # module_and_method_color = self.get_name_color('%s.%s' % (record.name, record.funcName))
             module_and_method_color = self.get_name_color(record.name)
             colors['_cdl_name'] = module_and_method_color
             # group mapping should take care of the rest of these once _cdl_name is set
@@ -181,18 +172,8 @@ class TermColorMapper(mapper.BaseColorMapper):
             colors['_cdl_threadName'] = tname_color
             colors['_cdl_exc_text'] = tid_color
 
-        # add a custom faux record attribute for the combo of name and funcName (module)?
-        # name_and_method = '%s.%s' % (record.name, record.funcName)
-        # name_and_method_color = self.get_name_color(name_and_method)
-        # colors['_cdl_name_funcName'] = name_and_method_color
-
         # fields we don't need to calculate indiv, since they will be a different group
         in_a_group = set()
-
-        # populate the set of groups members before figuring out any group colors
-        # for group, members in self.group_by:
-        #    for member in members:
-        #        in_a_group.add(member)
 
         # find the color for any group keys before setting colors for group members
         # TODO: extend group keys to let them be tuples
@@ -203,20 +184,15 @@ class TermColorMapper(mapper.BaseColorMapper):
             if group in self.custom_attrs or group in in_a_group:
                 continue
             color_idx = self.get_name_color(getattr(record, group), 'sdsdf')
-            # print(('group', group))
-            # if group == 'threadName':
-            #    print((record.threadName, color_idx))
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
 
-            # print(('group2', group))
             for member in members:
                 colors['_cdl_%s' % member] = group_color
                 in_a_group.add(member)
 
-        # calc_colors = set()
         # for everything else, use the name/string to get a color if auto_colors is True
         for needed_attr in attrs_needed:
             if needed_attr in self.custom_attrs or needed_attr in in_a_group \
@@ -224,7 +200,6 @@ class TermColorMapper(mapper.BaseColorMapper):
                 continue
             color_idx = self.get_name_color(getattr(record, needed_attr))
             colors['_cdl_%s' % needed_attr] = color_idx
-            # calc_colors.add(needed_attr)
 
         # set the default color based on computed values, lookup the color
         # mapped to the attr default_color_by_attr  (ie, if 'process', lookup
