@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import os
 import threading
 
 import yaml
@@ -31,6 +32,10 @@ def log_setup(log_config_file):
 def show_setup():
     if not LOGGING_TREE:
         return
+
+    if not os.environ.get('CBL_LOGGING_TREE'):
+        return
+
     logging_tree.printout()
 
 
