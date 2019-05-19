@@ -3,7 +3,6 @@
 import logging
 
 import random
-import signal
 import string
 import sys
 import threading
@@ -155,7 +154,7 @@ def gen_log_events(msg, sleep):
         # func4()
         # random_sleep()
 
-    color_bucket_logger.other_module.func3()
+    # color_bucket_logger.other_module.func3()
 
 
 def _gen_log_events(handler):
@@ -215,10 +214,7 @@ def main(args):
         t.join()
     return 0
 
-def sigint_handler(signal, frame):
-    sys.exit(0)
 
 if __name__ == '__main__':
-    # signal.signal(signal.SIGINT, sigint_handler)
 
     sys.exit(main(sys.argv[:]))
