@@ -1,5 +1,5 @@
 
-DEFAULT_COLOR_BY_ATTR = 'process'
+DEFAULT_COLOR_BY_ATTR = 'name'
 
 
 class BaseColorMapper(object):
