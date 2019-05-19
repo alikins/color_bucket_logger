@@ -1,16 +1,37 @@
 import logging
+import logging.config
 import threading
+
+import yaml
 
 flog = logging.getLogger('foo')
 blog = logging.getLogger('bar')
 blog.setLevel(logging.DEBUG)
 
-# import logging_tree
-# logging_tree.printout()
+LOGGING_TREE = False
+try:
+    import logging_tree
+    LOGGING_TREE = True
+except ImportError:
+    print("Could not import logging_tree, but thats ok")
 
 
 class ExampleException(Exception):
     pass
+
+
+def log_setup(log_config_file):
+
+    with open(log_config_file, 'r') as log_config_fd:
+        log_config = yaml.safe_load(log_config_fd)
+
+    logging.config.dictConfig(log_config)
+
+
+def show_setup():
+    if not LOGGING_TREE:
+        return
+    logging_tree.printout()
 
 
 def log_stuff():

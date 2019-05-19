@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import logging
+import logging.config
 import os
 import sys
 
 from gen_log_entries import run, log_setup, show_setup
 
-CONFIG = 'yaml_dict_config.yml'
+CONFIG = 'yaml_dict_default_config.yml'
 
 
 if __name__ == '__main__':

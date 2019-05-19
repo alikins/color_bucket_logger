@@ -1,0 +1,18 @@
+---
+disable_existing_loggers: false
+filters: {}
+formatters:
+  color_verbose:
+    (): color_bucket_logger.ColorFormatter
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: color_verbose
+    level: DEBUG
+    stream: ext://sys.stderr
+loggers: {}
+root:
+  level: DEBUG
+  handlers:
+    - console
+version: 1
