@@ -1,0 +1,32 @@
+---
+disable_existing_loggers: false
+filters: {}
+formatters:
+  color_verbose:
+    (): color_bucket_logger.TermFormatter
+    format: '[%(asctime)s %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)-3d - %(message)s'
+
+    # Make the default color of the message correspond to value of the
+    # rendered message. So all of the 'The blip was sent to 127.0.0.1'
+    # entries get the same color.
+    # Note: This is not by 'msg' which is the pre rendered string including
+    # string formatting markup.
+    default_color_by_attr: 'message'
+
+    auto_color: false
+
+    color_groups:
+      - ['levelname', ['levelname']]
+      - ['funcName', ['lineno']]
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: color_verbose
+    level: DEBUG
+    stream: ext://sys.stderr
+loggers: {}
+root:
+  level: DEBUG
+  handlers:
+    - console
+version: 1

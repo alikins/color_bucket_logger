@@ -1,0 +1,26 @@
+---
+disable_existing_loggers: false
+filters: {}
+formatters:
+  color_verbose:
+    (): color_bucket_logger.ColorFormatter
+    format: '[%(message)s] %(asctime)s %(threadName)s:%(thread)d %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)-3d'
+
+    # Make the default color of the message correspond to the logger name
+    default_color_by_attr: 'exc_info'
+
+    auto_color: false
+
+    color_groups: []
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: color_verbose
+    level: ERROR
+    stream: ext://sys.stderr
+loggers: {}
+root:
+  level: DEBUG
+  handlers:
+    - console
+version: 1

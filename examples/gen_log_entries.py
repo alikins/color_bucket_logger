@@ -36,7 +36,8 @@ def show_setup():
 
 def log_stuff():
     flog.debug('First debug message')
-    flog.info('fi')
+    flog.info('This is a record with format strings: %s', 'blip')
+    flog.debug('This is a record with format strings: %s', 'baz')
     flog.warn('Some warning')
     flog.warn('Some warning')
 
@@ -79,7 +80,7 @@ def throw_deep_exc(msg=None):
         blog.exception(e)
 
 
-def gen_log_events(thread_msg=None):
+def gen_log_events(thread_msg=None, throw_exc=False):
     log_stuff()
 
     log_more_stuff()
@@ -87,16 +88,22 @@ def gen_log_events(thread_msg=None):
     # Generate log messages that reference the thread we expect it to come from
     log_thread_msg(thread_msg)
 
-    throw_deep_exc('This example is raise as an example of log.exception() handling')
+    try:
+        raise ExampleException('This is an expected example exception to demo log.exception()')
+    except ExampleException as exc:
+        flog.exception(exc)
+
+    if throw_exc:
+        throw_deep_exc('This example is raise as an example of log.exception() handling')
 
     log_more_stuff()
 
 
-def run():
-    gen_log_events()
+def run(throw_exc=False):
+    gen_log_events(thread_msg='Just the main thread', throw_exc=throw_exc)
 
 
-def run_threaded(thread_count=2):
+def run_threaded(thread_count=2, throw_exc=False):
     threads = []
     thread_time_increment = 0.001  # seconds
     main_thread = threading.currentThread()
@@ -108,7 +115,8 @@ def run_threaded(thread_count=2):
                             function=gen_log_events,
                             # Timers use auto created threadname 'Thread-$count', where count starts at 1,
                             # hence the +1 here.
-                            args=('msg from thread #%s' % (i + 1,),))
+                            args=('msg from thread #%s' % (i + 1,),
+                                  throw_exc))
         # An example of threads where they have a vague unuseful threadName
         # For ex, when there are 10 threads all named 'helper'
         named_thread = threading.Thread(target=gen_log_events, name='VagueThreadName',

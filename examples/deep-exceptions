@@ -5,7 +5,7 @@ import sys
 
 from gen_log_entries import run_threaded, log_setup, show_setup
 
-CONFIG = 'threaded.yml'
+CONFIG = 'deep-exceptions.yml'
 
 
 if __name__ == '__main__':
@@ -13,5 +13,5 @@ if __name__ == '__main__':
 
     log_setup(log_config_file)
     show_setup()
-    run_threaded(thread_count=5)
+    run_threaded(thread_count=3, throw_exc=True)
     sys.exit()

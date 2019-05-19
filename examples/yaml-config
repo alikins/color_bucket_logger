@@ -5,7 +5,7 @@ import sys
 
 from gen_log_entries import run, log_setup, show_setup
 
-CONFIG = 'yaml_dict_config.yml'
+CONFIG = 'yaml-config.yml'
 
 
 if __name__ == '__main__':
