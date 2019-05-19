@@ -54,13 +54,15 @@ def teardown_config():
     logging.config.dictConfig(min_log_config)
 
 
-def setup_logger(color_groups=None, fmt=None, formatter_class=None, auto_color=False):
+def setup_logger(color_groups=None, fmt=None,
+                 formatter_class=None, auto_color=False,
+                 default_color_by_attr=None):
     formatter_class = formatter_class or color_bucket_logger.ColorFormatter
     color_groups = color_groups or [('name', ['name', 'levelname'])]
 
     fmt = fmt or '%(levelname)s %(name)s %(message)s'
     formatter = formatter_class(fmt=fmt,
-                                default_color_by_attr='name',
+                                default_color_by_attr=default_color_by_attr or 'name',
                                 color_groups=color_groups,
                                 auto_color=auto_color)
 
@@ -169,6 +171,27 @@ def test_get_name_color():
         testlog.debug('logged_item: %s', logged_item)
         assert expected_levelname in logged_item
         assert expected_message in logged_item
+
+
+def test_default_color_by_just_message():
+    logger, handler, formatter = setup_logger(color_groups=[],
+                                              default_color_by_attr='message',
+                                              fmt='levelname=%(levelname)s name=%(name)s message=%(message)s')
+    logger.debug('some msg 0')
+    logger.debug('some other msg 2')
+    logger.info('some other msg 2')
+    logger.debug('some_msg1')
+    logger.info('some_msg1')
+    logger.error('some_msg1')
+
+    for logged_item in handler.buf:
+        testlog.debug('logged_item: %s', logged_item)
+        expected_default = '\x1b[38;5;113m'
+        other_expected_default = '\x1b[38;5;52m'
+        if 'some_msg1' in logged_item:
+            assert expected_default in logged_item
+        if 'some other msg 2' in logged_item:
+            assert other_expected_default in logged_item
 
 
 def test_get_thread_color():

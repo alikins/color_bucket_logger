@@ -183,7 +183,12 @@ class TermColorMapper(mapper.BaseColorMapper):
             group_color = colors.get('_cdl_%s' % group, _default_color_index)
             if group in self.custom_attrs or group in in_a_group:
                 continue
-            color_idx = self.get_name_color(getattr(record, group), 'sdsdf')
+
+            # record.message isnt 'rendered' until after the format
+            if group == 'message':
+                color_idx = self.get_name_color(record.getMessage())
+            else:
+                color_idx = self.get_name_color(getattr(record, group), 'sdsdf')
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
