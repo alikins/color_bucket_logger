@@ -32,10 +32,8 @@ class BaseColorMapper(object):
         self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
         # make sure the defaut color attr is in the group_by list
-        if default_color_by_attr:
-            self.group_by.insert(0, (default_color_by_attr, [default_color_by_attr]))
-            # format_attr_names = [z[1] for z in format_attrs]
-            # self.group_by.insert(0, (default_color_by_attr, format_attr_names) )
+        if self.default_color_by_attr:
+            self.group_by.insert(0, (self.default_color_by_attr, [self.default_color_by_attr]))
 
         self.group_by.extend(self.color_groups)
 

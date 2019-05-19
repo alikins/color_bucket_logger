@@ -115,6 +115,44 @@ def test_find_format_attrs_precision():
     assert ('%(lineno)d', 'lineno') in res
 
 
+def other_logger():
+    logger = logging.getLogger(__name__ + '.test_logger.other')
+    logger.disabled = False
+    logger.setLevel(logging.DEBUG)
+
+    logger.debug('Other Logger %s', 'TheOL')
+    logger.error('We have a problem')
+
+
+def test_term_formatter_no_args():
+    formatter = color_bucket_logger.TermFormatter()
+
+    logger = logging.getLogger(__name__ + '.test_logger')
+    logger.disabled = False
+    logger.setLevel(logging.DEBUG)
+
+    handler = BufHandler(level=logging.DEBUG)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    logger.debug('default termFormatter no args %s', 'blip')
+    other_logger()
+    logger.critical('I think you chew too loudly')
+    logging_tree.printout()
+
+    # The default is to colorize by logger name, so setup two
+    # loggers, and assert they got expected color therefore different
+    other_exp = '\x1b[38;5;53m'
+    too_loudly_exp = '\x1b[38;5;70m'
+
+    for logged_item in handler.buf:
+        testlog.debug('logged_item: %s', logged_item)
+        if 'other_logger' in logged_item:
+            assert other_exp in logged_item
+        if 'too loudly' in logged_item:
+            assert too_loudly_exp in logged_item
+
+
 def test_get_name_color():
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
                                               fmt='levelname=%(levelname)s name=%(name)s message=%(message)s')
@@ -237,14 +275,13 @@ def formatter_class(request):
 
 
 def test_stuff(formatter_class):
-    print('premin')
     teardown_config()
-    print('postmin')
     logging_tree.printout()
 
-    fmt_string = 'logger %(levelname)s %(created)s %(filename)s %(funcName)s ' + \
-        '%(levelno)s %(module)s %(pathname)s %(process)d ' + \
-        '%(thread)d %(name)s %(message)s'
+    # All of the default log record attributes
+    fmt_string = 'logger %(levelname)s %(asctime)s %(created)f %(msecs)d %(relativeCreated)d %(filename)s %(funcName)s ' + \
+        '%(levelno)s %(module)s %(pathname)s %(process)d %(processName)s' + \
+        '%(thread)d %(threadName)s %(name)s %(message)s'
     logger, handler, formatter = setup_logger(color_groups=[('name', ['name', 'levelname'])],
                                               fmt=fmt_string,
                                               auto_color=True,
@@ -258,7 +295,6 @@ def test_stuff(formatter_class):
                                                 auto_color=False,
                                                 formatter_class=formatter_class)
 
-    print('post setup')
     logging_tree.printout()
 
     logger.debug('D: %s', '_debug')
