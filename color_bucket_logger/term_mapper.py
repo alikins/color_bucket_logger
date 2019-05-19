@@ -3,7 +3,8 @@ from . import term_colors
 
 
 class TermColorMapper(mapper.BaseColorMapper):
-    # FIXME: use logging.DEBUG etc enums
+    #: A fixed map of logging level to color used by the
+    #: default get_level_color()
     LEVEL_COLORS = {'TRACE': term_colors.BLUE,
                     'SUBDEBUG': term_colors.BLUE,
                     'DEBUG': term_colors.BLUE,
@@ -47,12 +48,11 @@ class TermColorMapper(mapper.BaseColorMapper):
 
     # TODO: This could special case 'MainThread'/'MainProcess' to pick a good predictable color
     def get_name_color(self, name, perturb=None):
-        # if name == '':
-        #    return self._default_color_index
-        perturb = perturb or 'xccvsdfb'
-        perturb = 'dsfadddddd'
+        perturb = perturb or ''
+        # perturb = 'dsfadddddd'
+
         name = '%s%s' % (name, perturb)
-        # name_hash = hash(name)
+
         name_hash = sum([ord(x) for x in name])
         name_mod = name_hash % self.NUMBER_OF_COLORS
         return name_mod + term_colors.RGB_COLOR_OFFSET
@@ -91,14 +91,15 @@ class TermColorMapper(mapper.BaseColorMapper):
         """
 
         pname, pid, tname, tid = record.processName, record.process, record.threadName, record.thread
+
         # 'pname' is almost always 'MainProcess' which ends up a ugly yellow. perturb is here to change the color
         # that 'MainProcess' ends up to a nicer light green
         perturb = 'pseudoenthusiastically'
-        # perturb = 'a'
+
         # combine pid+pname otherwise, all MainProcess will get the same pname
         pid_label = '%s%s' % (pname, pid)
         pname_color = self.get_name_color(pid_label, perturb=perturb)
-        # pname_color = self.get_name_color(pid_label, perturb=perturb)
+
         if pname == 'MainProcess':
             pid_color = pname_color
         else:
