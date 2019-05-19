@@ -128,11 +128,11 @@ class ColorFormatter(logging.Formatter):
         fmt = fmt or DEFAULT_FORMAT
         logging.Formatter.__init__(self, fmt, datefmt=datefmt)
         self._base_fmt = fmt
-        self._color_fmt = None
-
-        self._format_attrs = find_format_attrs(self._base_fmt)
 
         self.color_groups = color_groups or []
+
+        self._color_fmt = None
+        self._format_attrs = find_format_attrs(self._base_fmt)
 
         # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
         # self.default_color_by_attr = default_color_by_attr or 'process'
@@ -146,9 +146,12 @@ class ColorFormatter(logging.Formatter):
                                             auto_color=auto_color)
 
     def __repr__(self):
-        buf = 'ColorFormatter(fmt="%s", datefmt="%s", auto_color=%s)' % (self._base_fmt,
-                                                                         self.datefmt,
-                                                                         self.color_mapper.auto_color)
+        buf = '%s(fmt="%s", datefmt="%s", auto_color=%s, color_mapper.default_color_by_attr=%s)' % \
+            (self.__class__.__name__,
+             self._base_fmt,
+             self.datefmt,
+             self.color_mapper.auto_color,
+             self.color_mapper.default_color_by_attr)
         return buf
 
     def _pre_format(self, record):
