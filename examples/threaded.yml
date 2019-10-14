@@ -5,7 +5,7 @@ formatters:
   color_verbose:
     (): color_bucket_logger.ColorFormatter
     # Only one processName here (MainProcess) so not included here
-    format: '[%(asctime)s %(process)05d %(threadName)s:%(thread)d %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)-3d - %(message)s'
+    format: '%(threadName)-15s|s%(thread)d| %(asctime)s %(levelname)-0.1s %(name)s %(funcName)s:%(lineno)-3d - %(message)s'
 
     # Make the default color of the message correspond to the logger name
     default_color_by_attr: 'thread'
