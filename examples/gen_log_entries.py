@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import signal
 import threading
 
 import yaml
@@ -61,6 +62,8 @@ def log_more_stuff():
     # use the root logger
     logging.debug('A debug message')
 
+    flog.critical('uh oh', extra={'snafu': True})
+
 
 def log_thread_msg(thread_msg):
     flog.warn(thread_msg)
@@ -85,7 +88,10 @@ def throw_deep_exc(msg=None):
         blog.exception(e)
 
 
-def gen_log_events(thread_msg=None, throw_exc=False):
+def gen_log_events(thread_msg=None, throw_exc=False, stop_event=None):
+    if stop_event and stop_event.isSet():
+        return
+
     log_stuff()
 
     log_more_stuff()
@@ -110,8 +116,19 @@ def run(throw_exc=False):
 
 def run_threaded(thread_count=2, throw_exc=False):
     threads = []
+    timers = []
     thread_time_increment = 0.001  # seconds
     main_thread = threading.currentThread()
+
+    stop_event = threading.Event()
+
+    def fire_event(signum, frame):
+        # logging.info(“Event fired”)
+        stop_event.set()
+        for timer in timers:
+            timer.cancel()
+
+    signal.signal(signal.SIGINT, fire_event)
 
     for i in range(thread_count):
         interval = thread_time_increment * i
@@ -121,12 +138,13 @@ def run_threaded(thread_count=2, throw_exc=False):
                             # Timers use auto created threadname 'Thread-$count', where count starts at 1,
                             # hence the +1 here.
                             args=('msg from thread #%s' % (i + 1,),
-                                  throw_exc))
+                                  throw_exc,
+                                  stop_event))
         # An example of threads where they have a vague unuseful threadName
         # For ex, when there are 10 threads all named 'helper'
         named_thread = threading.Thread(target=gen_log_events, name='VagueThreadName',
-                             args=('msg from vague thread #%s' % i,))
-        threads.append(t)
+                             args=('msg from vague thread #%s' % i, stop_event))
+        timers.append(t)
         threads.append(named_thread)
         t.daemon = True
         named_thread.daemon = True
