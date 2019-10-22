@@ -124,9 +124,18 @@ class ColorFormatter(logging.Formatter):
         return self._color_fmt
 
     def __init__(self, fmt=None, default_color_by_attr=None,
-                 color_groups=None, auto_color=False, datefmt=None):
+                 color_groups=None, auto_color=False, datefmt=None, style=None):
         fmt = fmt or DEFAULT_FORMAT
-        logging.Formatter.__init__(self, fmt, datefmt=datefmt)
+        kwargs = dict(fmt=fmt, datefmt=datefmt)
+
+        # py2 logging.Formatter will error on a 'style' keyword of course,
+        # but it's needed for py3.
+        # TODO: Unless we stop using the logging.Formatter base class at all, which
+        #       may be more reasonable at this point.
+        if style:
+            kwargs['style'] = style
+        logging.Formatter.__init__(self, **kwargs)
+
         self._base_fmt = fmt
 
         self.color_groups = color_groups or []
