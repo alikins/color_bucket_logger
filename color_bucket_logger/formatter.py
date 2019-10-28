@@ -5,6 +5,7 @@ import logging
 import re
 
 from . import term_mapper
+from . import styles
 
 DEFAULT_FORMAT = ("""%(asctime)-15s"""
                   """ %(levelname)-0.1s"""
@@ -39,68 +40,6 @@ def find_format_attrs(format_string):
     return format_attrs
 
 
-def context_color_format_string(format_string, format_attrs):
-    """For extending a format string for :py:class:`logging.Formatter` to include attributes with color info.
-
-    ie::
-
-        '%(process)d %(threadName)s - %(msg)'
-
-    becomes::
-
-        '%(_cdl_process)s%(process)d%(_cdl_reset)s %(_cdl_threadName)%(threadName)s%(_cdl_reset)s - %(msg)'
-    """
-
-    format_attrs = find_format_attrs(format_string)
-
-    color_attrs_string = '|'.join([x[1] for x in format_attrs])
-
-    # This looks for log format strings like '%(threadName)s' or '%(process)d, and replaces
-    # the format specifier with a version wrapped with log record color attributes.
-    #
-    # For ex, '%(threadName)s'  -> %(_cdl_threadName)s%(threadName)s%(cdl_reset)
-    #
-    # When ColorFormatter.format() is called on a LogRecord, this is equilivent to
-    # calling 'log_format_string % log_record.__dict__', and uses the normal (but 'old school')
-    # string formatting (ie, %s style). 'threadName' is populated automatically by a logging.Logger() class on .log(),
-    # but the custom fields like %(_cdl_threadName)s need to be added to the log record
-    # we pass to ColorFormatter.format()
-    #
-    # ColorFormatter.format() actually does this itself, but those attributes could be set else
-    # via a logger, a log adapter, a logging Filter attached to the logger, a filter attached
-    # to a logging.Handler, or by a logging handler itself. Since our attributes are purely for
-    # formatting, we just do it in the ColorFormatter.format()
-    # https://docs.python.org/2/library/logging.html#logrecord-attributes
-    #
-    # THe captured groups 'full_attr' is the entire record attribute from the string, including
-    # string formatting/precsion, and padding info. ie '%(process)-10d' is a process pid right justified with
-    # a max length of 10 chars.
-    #
-    # The capture 'attr_name' is just the name of the attr, 'process' or 'message' or 'levelname' for ex. This
-    # is extract so it can be used in the name of the color debug logger attribute that will set the color info
-    # For '%(process)-10d', that would make 'process' the attr_name, and the color attribute '%(_cdl_process)'
-    # color_attrs_string is a sub regex of the attr names to be given color using the re alternate '|' notation.
-    re_string = r"(?P<full_attr>%\((?P<attr_name>" + color_attrs_string + r"?)\).*?[dsf])"
-
-    color_format_re = re.compile(re_string)
-
-    replacement = r"%(_cdl_\g<attr_name>)s\g<full_attr>%(_cdl_unset)s"
-
-    # likely needs thread locking
-    # exc_info_post = '%(exc_text_sep)s%(exc_text)s%(exc_text_sep)s'
-    # format_string = '%s%s' % (format_string, exc_info_post)
-
-    # for match in format_attrs.groups():
-    #    print('match: %s' % match)
-
-    format_string2 = color_format_re.sub(replacement, format_string)
-
-    # set the default color at the begining of the format string and add a reset to the end
-    format_string = r"%(_cdl_default)s" + format_string2 + r"%(_cdl_reset)s"
-
-    return format_string
-
-
 def add_default_record_attrs(record, attr_list):
     """Add default values to a log record for each attr in attr_list
 
@@ -117,11 +56,11 @@ class ColorFormatter(logging.Formatter):
     """Base color bucket formatter"""
 
     # A little weird...
-    @property
-    def color_fmt(self):
-        if not self._color_fmt:
-            self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
-        return self._color_fmt
+    # @property
+    # def color_fmt(self):
+    #    if not self._color_fmt:
+    #        self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
+    #    return self._color_fmt
 
     def __init__(self, fmt=None, default_color_by_attr=None,
                  color_groups=None, auto_color=False, datefmt=None, style=None):
@@ -136,12 +75,17 @@ class ColorFormatter(logging.Formatter):
             kwargs['style'] = style
         logging.Formatter.__init__(self, **kwargs)
 
+        # assue % style if not specified. py2 will not specifiy
+        style_name = style or '%'
+
+        # Override the 'style' set in logging.Formatter.__init__ (for py3)
+        self._style = styles._STYLES[style_name][0](fmt)
         self._base_fmt = fmt
 
         self.color_groups = color_groups or []
 
-        self._color_fmt = None
-        self._format_attrs = find_format_attrs(self._base_fmt)
+        # self._color_fmt = None
+        # self._format_attrs = find_format_attrs(self._base_fmt)
 
         # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
         # self.default_color_by_attr = default_color_by_attr or 'process'
@@ -151,7 +95,7 @@ class ColorFormatter(logging.Formatter):
         self.color_mapper = term_mapper.TermColorMapper(fmt=self._base_fmt,
                                             default_color_by_attr=default_color_by_attr,
                                             color_groups=self.color_groups,
-                                            format_attrs=self._format_attrs,
+                                            format_attrs=self._style._format_attrs,
                                             auto_color=auto_color)
 
     def __repr__(self):
@@ -196,7 +140,7 @@ class ColorFormatter(logging.Formatter):
 
         # Figure out what each log records color will be and return
         # a dict key'ed by a string of form '%_cdl_' + the log record attr name
-        colors = self.color_mapper.get_colors_for_record(record, self._format_attrs)
+        colors = self.color_mapper.get_colors_for_record(record, self._style._format_attrs)
 
         # Create a context dict of the log records attributes (the __dict__ of
         # the LogRecord() plus all of the color map items from the 'colors' dict.
@@ -207,7 +151,7 @@ class ColorFormatter(logging.Formatter):
         record_context['message'] = record.getMessage()
 
         # Format the main part of the log message first
-        s = self._format(record_context)
+        s = self._style._format(record_context)
 
         # Then append the formatted exception info if there is any
         if record_context.get('exc_text', None):
@@ -221,8 +165,8 @@ class ColorFormatter(logging.Formatter):
     # Note that self._format here is more or less the same as py3's Formatter.formatMessage()
     # and self.color_fmt is similar to py3's Formatter._style, but neither are used here
     # for py2 compat.
-    def _format(self, record_context):
-        return self.color_fmt % record_context
+    # def _format(self, record_context):
+    #    return self.color_fmt % record_context
 
 
 class TermFormatter(ColorFormatter):
@@ -269,5 +213,5 @@ class TermFormatter(ColorFormatter):
         self.color_mapper = term_mapper.TermColorMapper(fmt=fmt,
                                                         default_color_by_attr=default_color_by_attr,
                                                         color_groups=color_groups,
-                                                        format_attrs=self._format_attrs,
+                                                        format_attrs=self._style._format_attrs,
                                                         auto_color=auto_color)
