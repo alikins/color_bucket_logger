@@ -90,9 +90,6 @@ class PercentStyle(object):
         # exc_info_post = '%(exc_text_sep)s%(exc_text)s%(exc_text_sep)s'
         # format_string = '%s%s' % (format_string, exc_info_post)
 
-        # for match in format_attrs.groups():
-        #    print('match: %s' % match)
-
         format_string2 = color_format_re.sub(replacement, format_string)
 
         # set the default color at the begining of the format string and add a reset to the end
@@ -124,15 +121,12 @@ class PercentStyle(object):
             raise ValueError('Formatting field not found in record: %s' % e)
 
     def find_format_attrs(self, format_string):
-        # attrs_re_string = r"(?P<full_attr>%\((?P<attr_name>" + r'.*' + r"?)\).*?[dsf])"
-        # attrs_re = re.compile(attrs_re_string)
-
         format_attrs = self.attrs_pattern.findall(format_string)
 
-        # print('format_attrs: %s' % format_attrs)
         return format_attrs
 
 
+# TODO: rename, and/or subclass the py3 classes
 class StrFormatStyle(PercentStyle):
     default_format = '{message}'
     asctime_format = '{asctime}'
@@ -141,32 +135,38 @@ class StrFormatStyle(PercentStyle):
     fmt_spec = re.compile(r'^(.?[<>=^])?[+ -]?#?0?(\d+|{\w+})?[,_]?(\.(\d+|{\w+}))?[bcdefgnosx%]?$', re.I)
     field_spec = re.compile(r'^(\d+|\w+)(\.\w+|\[[^]]+\])*$')
 
+    uber_format_pattern = r'(?P<full_attr>{(?P<attr_name>\d+|\w+)[:]?' + \
+                        r'(?P<modifiers>(?P<align>.?[<>=^]?)(?P<sign>[+ -]?)' + \
+                        r'#?0?(?P<width>\d+|{\w+})?[,_]?(\.(\d+|{\w+}))?' + \
+                        r'(?P<conversion_type>[bcdefgnosx%])?)})'
+
     def find_format_attrs(self, format_string):
-        # attrs_re_string = r"(?P<full_attr>%\((?P<attr_name>" + r'.*' + r"?)\).*?[dsf])"
-        # attrs_re = re.compile(attrs_re_string)
+        attrs_pattern = re.compile(self.uber_format_pattern)
 
-        # format_attrs = self.attrs_pattern.findall(format_string)
-        format_attrs = []
-        try:
-            for _, fieldname, spec, conversion in _str_formatter.parse(format_string):
-                if fieldname:
-                    if not self.field_spec.match(fieldname):
-                        raise ValueError('invalid field name/expression: %r' % fieldname)
-                    format_attrs.append((_, fieldname, spec, conversion))
-                if conversion and conversion not in 'rsa':
-                    raise ValueError('invalid conversion: %r' % conversion)
-                if spec and not self.fmt_spec.match(spec):
-                    raise ValueError('bad specifier: %r' % spec)
-        except ValueError as e:
-            raise ValueError('invalid format: %s' % e)
-
-        print('format_attrs: %s' % format_attrs)
-        log.debug('format_attrs: %s', format_attrs)
-        # [('%(fileName)-0.1s', 'fileName')]
+        format_attrs = attrs_pattern.findall(format_string)
         return format_attrs
 
+    def context_color_format_string(self, format_string, format_attrs):
+        format_attrs = self.find_format_attrs(format_string)
+
+        color_attrs_string = '|'.join([x[1] for x in format_attrs])
+
+        # See notes for PercentStyle
+        re_string = r"(?P<full_attr>{(?P<attr_name>" + color_attrs_string + r")(:[=+<\d]+[dsf]?)?})+"
+
+        color_format_re = re.compile(re_string)
+
+        replacement = r"{_cdl_\g<attr_name>}\g<full_attr>{_cdl_unset}"
+
+        format_string2 = color_format_re.sub(replacement, format_string)
+
+        # set the default color at the begining of the format string and add a reset to the end
+        format_string = r"{_cdl_default}" + format_string2 + r"{_cdl_reset}"
+
+        return format_string
+
     def _format(self, record_context):
-        return self._fmt.format(**record_context)
+        return self.color_fmt.format(**record_context)
 
     def validate(self):
         """Validate the input format, ensure it is the correct string formatting style"""

@@ -4,8 +4,9 @@ filters: {}
 formatters:
   color_verbose:
     (): color_bucket_logger.ColorFormatter
-    fmt: "{asctime} {levelname:0.1} {processName:4} pid={process:5} {threadName:2} {name} {funcName} {filename} {lineno} - {message}"
+    fmt: "{asctime} {levelname:.1} {processName:4} pid={process:5} {threadName:2} {name} {funcName} {filename} {lineno} - {message}"
     style: '{'
+    auto_color: true
 handlers:
   console:
     class: logging.StreamHandler
