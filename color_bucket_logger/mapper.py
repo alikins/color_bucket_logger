@@ -29,7 +29,7 @@ class BaseColorMapper(object):
         # self.group_by = self.color_groups
 
         self.default_color_by_attr = default_color_by_attr or DEFAULT_COLOR_BY_ATTR
-        self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
+        # self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
         # make sure the defaut color attr is in the group_by list
         if self.default_color_by_attr:

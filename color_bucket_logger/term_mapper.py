@@ -63,7 +63,7 @@ class TermColorMapper(mapper.BaseColorMapper):
             level_color = self.LEVEL_COLORS.get(levelno, self.default_color)
         return level_color
 
-    def get_process_colors(self, record):
+    def get_process_colors(self, record_context):
         """Given process/thread info, return reasonable colors for them.
 
         Roughly:
@@ -81,8 +81,8 @@ class TermColorMapper(mapper.BaseColorMapper):
 
         Parameters
         ----------
-        record : :py:class:`logging.LogRecord`
-            The log record to calculate process colors for
+        record_context : :py:class:`dict`
+            The log record_context to calculate process colors for
 
         Returns
         -------
@@ -90,7 +90,10 @@ class TermColorMapper(mapper.BaseColorMapper):
             The color indexes for 'processName', 'process', 'threadName', and 'thread'
         """
 
-        pname, pid, tname, tid = record.processName, record.process, record.threadName, record.thread
+        pname = record_context['processName']
+        pid = record_context['process']
+        tname = record_context['threadName']
+        tid = record_context['thread']
 
         # 'pname' is almost always 'MainProcess' which ends up a ugly yellow. perturb is here to change the color
         # that 'MainProcess' ends up to a nicer light green
@@ -121,8 +124,8 @@ class TermColorMapper(mapper.BaseColorMapper):
     #       - also allows format to just expand a '%(threadName)s' in fmt string to '%(theadNameColor)s%(threadName)s%(reset)s' before regular formatter
     # DOWNSIDE: Filter would need to be attach to the Logger not the Handler
     # def add_color_attrs_to_record(self, record):
-    def get_colors_for_record(self, record, format_attrs):
-        """For a :py:class:`logging.LogRecord` record, compute color for each field and return a color dict"""
+    def get_colors_for_record(self, record_context, format_attrs):
+        """For a  record_context dict, compute color for each field and return a color dict"""
 
         _default_color_index = term_colors.DEFAULT_COLOR_IDX
         _color_by_attr_index = _default_color_index
@@ -149,13 +152,13 @@ class TermColorMapper(mapper.BaseColorMapper):
         # NOTE: the impl here is based on info from justthe LogRecord and should be okay across threads
         #       If this wants to use more global data, beware...
         if use_level_color:
-            level_color = self.get_level_color(record.levelname, record.levelno)
+            level_color = self.get_level_color(record_context['levelname'], record_context['levelno'])
             colors['_cdl_levelname'] = level_color
 
         # set a different color for each logger name. And by default, make filename, funcName, and lineno match.
-        use_name_color = 'name' in group_by_attrs
+        use_name_color = 'name' in group_by_attrs or self.auto_color
         if use_name_color:
-            module_and_method_color = self.get_name_color(record.name)
+            module_and_method_color = self.get_name_color(record_context['name'])
             colors['_cdl_name'] = module_and_method_color
             # group mapping should take care of the rest of these once _cdl_name is set
 
@@ -165,7 +168,7 @@ class TermColorMapper(mapper.BaseColorMapper):
                 use_thread_color = True
 
         if use_thread_color or self.auto_color:
-            pname_color, pid_color, tname_color, tid_color = self.get_process_colors(record)
+            pname_color, pid_color, tname_color, tid_color = self.get_process_colors(record_context)
 
             colors['_cdl_process'] = pid_color
             colors['_cdl_processName'] = pname_color
@@ -187,10 +190,10 @@ class TermColorMapper(mapper.BaseColorMapper):
 
             # record.message isnt 'rendered' until after the format
             if group == 'message':
-                color_idx = self.get_name_color(record.getMessage())
+                color_idx = self.get_name_color(record_context['_cdl_xmessage'])
             else:
                 # default to empty string for non existent record attributes ('extra', etc)
-                color_idx = self.get_name_color(getattr(record, group, ''), 'sdsdf')
+                color_idx = self.get_name_color(record_context.get('group', ''), 'sdsdf')
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
@@ -209,7 +212,7 @@ class TermColorMapper(mapper.BaseColorMapper):
             if needed_attr in self.custom_attrs or needed_attr in in_a_group \
                     or needed_attr in self.high_cardinality or not self.auto_color:
                 continue
-            color_idx = self.get_name_color(getattr(record, needed_attr))
+            color_idx = self.get_name_color(record_context.get(needed_attr, ''))
             colors['_cdl_%s' % needed_attr] = color_idx
 
         # set the default color based on computed values, lookup the color

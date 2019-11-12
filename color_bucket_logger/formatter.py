@@ -39,17 +39,29 @@ def find_format_attrs(format_string):
 
     return format_attrs
 
+# TODO: If there are common fields that should not default to None,
+#       add them here
+def default_attr_value(attr):
+    if attr == 'stack_depth':
+        return ''
+    return None
 
-def add_default_record_attrs(record, attr_list):
-    """Add default values to a log record for each attr in attr_list
+# This could just return a dict of default values instead of
+# modifying the record.
+def get_default_record_attrs(record_context, attr_list):
+    """Add default values to a log record_context for each attr in attr_list
 
-    Note: This modifies the :obj:`logging.LogRecord` instance in place, so
-    this method has side effects."""
+    Return a dict of {record_attr_name: some_default_value}.
+    For example, a record_context with no 'stack_info' item would cause
+    the return to be {'stack_info': None}.
 
+    For now, the default value is always None."""
+
+    defaults_for_attrs = {}
     for attr in attr_list:
-        if not hasattr(record, attr):
-            setattr(record, attr, None)
-    return record
+        if attr not in record_context:
+            defaults_for_attrs[attr] = default_attr_value(attr)
+    return defaults_for_attrs
 
 
 class ColorFormatter(logging.Formatter):
@@ -133,21 +145,26 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         self._pre_format(record)
 
-        # for py3.2+ compat
-        record = add_default_record_attrs(record, ['stack_info'])
-        if not hasattr(record, 'stack_depth'):
-            setattr(record, 'stack_depth', '')
-
-        # Figure out what each log records color will be and return
-        # a dict key'ed by a string of form '%_cdl_' + the log record attr name
-        colors = self.color_mapper.get_colors_for_record(record, self._style._format_attrs)
-
         # Create a context dict of the log records attributes (the __dict__ of
         # the LogRecord() plus all of the color map items from the 'colors' dict.
         # This avoids having to modify the LogRecord() instance in place.
         record_context = {}
         record_context.update(record.__dict__)
+
+        # 'stack_info' attr always added for py2/py3 compat
+        new_defaults_for_attrs = get_default_record_attrs(record_context, ['stack_info'] + [x[1] for x in self._style._format_attrs])
+        record_context.update(new_defaults_for_attrs)
+
+        # Need the pre color rendered message early so we can use it as a color group
+        record_context['_cdl_xmessage'] = record.getMessage()
+
+        # Figure out what each log records color will be and return
+        # a dict key'ed by a string of form '%_cdl_' + the log record attr name
+        colors = self.color_mapper.get_colors_for_record(record_context, self._style._format_attrs)
+
         record_context.update(colors)
+
+        # Re render
         record_context['message'] = record.getMessage()
 
         # Format the main part of the log message first
