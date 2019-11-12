@@ -11,11 +11,12 @@ formatters:
     # entries get the same color.
     # Note: This is not by 'msg' which is the pre rendered string including
     # string formatting markup.
-    default_color_by_attr: 'message'
+    # default_color_by_attr: 'message'
 
     auto_color: false
 
     color_groups:
+      - ['message', ['default']]
       - ['levelname', ['levelname']]
       - ['funcName', ['lineno']]
 handlers:
