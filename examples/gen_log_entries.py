@@ -3,6 +3,7 @@ import logging.config
 import os
 import signal
 import threading
+import uuid
 
 import yaml
 
@@ -40,74 +41,79 @@ def show_setup():
     logging_tree.printout()
 
 
-def log_stuff():
-    flog.debug('First debug message')
-    flog.info('This is a record with format strings: %s', 'blip')
-    flog.debug('This is a record with format strings: %s', 'baz')
-    flog.warn('Some warning')
-    flog.warn('Some warning')
+def log_stuff(extra=None):
+    flog.debug('First debug message', extra=extra)
+    flog.info('This is a record with format strings: %s', 'blip', extra=extra)
+    flog.debug('This is a record with format strings: %s', 'baz', extra=extra)
+    flog.warn('Some warning', extra=extra)
+    flog.warn('Some warning', extra=extra)
 
     blog.warn('Some warning')
     blog.debug('First debug message')
-    blog.debug('Second debug message')
+    blog.debug('Second debug message', extra=extra)
 
-    blog.debug('A debug message')
+    blog.debug('A debug message', extra=extra)
 
 
-def log_more_stuff():
+def log_more_stuff(extra=None):
     flog.warn('Some warning')
-    flog.warn('Some warning')
-    blog.warn('Some warning')
+    flog.warn('Some warning', extra=extra)
+    blog.warn('Some warning', extra=extra)
 
     # use the root logger
-    logging.debug('A debug message')
+    logging.debug('A debug message', extra=extra)
 
-    flog.critical('uh oh', extra={'snafu': True})
+    flog.critical('uh oh', extra=extra)
 
 
-def log_thread_msg(thread_msg):
-    flog.warn(thread_msg)
+def log_thread_msg(thread_msg, extra=None):
+    flog.warn(thread_msg, extra=extra)
     blog.info(thread_msg)
-    logging.debug(thread_msg)
+    logging.debug(thread_msg, extra=extra)
 
 
 # to test nested exceptions, esp on py3
-def throw_deep_exc(msg=None):
+def throw_deep_exc(msg=None, extra=None):
     try:
         try:
             37 / 0
         except ZeroDivisionError as outer_e:
-            flog.exception(outer_e)
+            flog.exception(outer_e, extra=extra)
             try:
                 doesnt_exist.append(1)  # noqa
             except NameError as inner_e:
-                flog.exception(inner_e)
+                flog.exception(inner_e, extra=extra)
                 raise ExampleException(msg)
     except Exception as e:
-        flog.exception(e)
-        blog.exception(e)
+        flog.exception(e, extra=extra)
+        blog.exception(e, extra=extra)
 
 
 def gen_log_events(thread_msg=None, throw_exc=False, stop_event=None):
     if stop_event and stop_event.isSet():
         return
 
-    log_stuff()
+    # time_low is just the first 32 bits of the uuid, close enough
+    extra = {'tsx_id': uuid.uuid4().time_low}
+    log_stuff(extra=extra)
 
-    log_more_stuff()
+    log_more_stuff(extra=extra)
 
     # Generate log messages that reference the thread we expect it to come from
-    log_thread_msg(thread_msg)
+    log_thread_msg(thread_msg, extra=extra)
 
     try:
         raise ExampleException('This is an expected example exception to demo log.exception()')
     except ExampleException as exc:
-        flog.exception(exc)
+        flog.exception(exc, extra=extra)
 
     if throw_exc:
-        throw_deep_exc('This example is raise as an example of log.exception() handling')
+        throw_deep_exc('This example is raise as an example of log.exception() handling',
+                       extra=extra)
 
-    log_more_stuff()
+    # a different tsx_id
+    extra = {'tsx_id': uuid.uuid4().time_low}
+    log_more_stuff(extra=extra)
 
 
 def run(throw_exc=False):
