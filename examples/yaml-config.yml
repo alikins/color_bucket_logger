@@ -4,14 +4,14 @@ filters: {}
 formatters:
   color_verbose:
     (): color_bucket_logger.ColorFormatter
-    format: '[%(asctime)s %(processName)s:%(process)05d %(threadName)s:%(thread)d %(levelname)-0.1s] %(name)s %(funcName)s:%(lineno)-3d - %(message)s'
+    format: '[%(asctime)s %(processName)s:%(process)05d %(threadName)s:%(thread)d %(levelname)-0.1s] %(tsx_id)s %(name)s %(funcName)s:%(lineno)-3d - %(message)s'
 
     # Make the default color of the message correspond to the logger name
-    default_color_by_attr: 'name'
+    # default_color_by_attr: 'name'
 
     # Automatically choose color buckets for other fields based on their values.
     # Each log record field will colorize itself, except for the color buckets grouped
-    # together via color_groups.
+    # together via color_groups or built in custom attrs
     auto_color: true
 
     # If there are fields that should share the same color bucket, 'color_groups'
@@ -21,11 +21,16 @@ formatters:
     #
     # For example, to let 'process' and 'processName' fields use the 'process' color,
     # a color groups entry: "['process', ['processName']]'
+    #
+    # Note: If auto_color=True, the group name itself should be included in the
+    #       list of fieldnames to use for that color. auto_color will override
+    #       the color otherwise.
+    #       For example, "['process', ['process', 'processName']]"
+    # color_groups: ext://color_bucket_logger.groups.by_tsx_id
     color_groups:
-      - ['process', ['processName']]
-      # - ['name', ['exc_text']]
+      - ['name', ['name', 'default']]
       - ['levelname', ['levelname']]
-      - ['funcName', ['lineno']]
+      - ['funcName', ['funcName', 'lineno']]
 handlers:
   console:
     class: logging.StreamHandler
