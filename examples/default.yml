@@ -4,6 +4,8 @@ filters: {}
 formatters:
   color_verbose:
     (): color_bucket_logger.ColorFormatter
+    fmt: "%(asctime)s %(levelname)s %(processName)s pid=%(process)d %(threadName)s %(name)s %(funcName)s %(filename)s %(lineno)s - %(message)s"
+    auto_color: true
 handlers:
   console:
     class: logging.StreamHandler
