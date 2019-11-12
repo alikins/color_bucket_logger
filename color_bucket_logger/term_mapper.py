@@ -125,6 +125,7 @@ class TermColorMapper(mapper.BaseColorMapper):
         """For a :py:class:`logging.LogRecord` record, compute color for each field and return a color dict"""
 
         _default_color_index = term_colors.DEFAULT_COLOR_IDX
+        _color_by_attr_index = _default_color_index
         # 'cdl' is 'context debug logger'. Mostly just an unlikely record name to avod name collisions.
         colors = {'_cdl_default': _default_color_index,
                   '_cdl_unset': _default_color_index,
@@ -188,7 +189,8 @@ class TermColorMapper(mapper.BaseColorMapper):
             if group == 'message':
                 color_idx = self.get_name_color(record.getMessage())
             else:
-                color_idx = self.get_name_color(getattr(record, group), 'sdsdf')
+                # default to empty string for non existent record attributes ('extra', etc)
+                color_idx = self.get_name_color(getattr(record, group, ''), 'sdsdf')
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
@@ -196,6 +198,10 @@ class TermColorMapper(mapper.BaseColorMapper):
 
             for member in members:
                 colors['_cdl_%s' % member] = group_color
+                if member == 'default':
+                    self.default_color_by_attr = group
+                    # _color_by_attr_index = colors.get('_cdl_%s' % group, _default_color_index)
+                    # _color_by_attr_index = colors[default_attr_string]
                 in_a_group.add(member)
 
         # for everything else, use the name/string to get a color if auto_colors is True
@@ -209,7 +215,8 @@ class TermColorMapper(mapper.BaseColorMapper):
         # set the default color based on computed values, lookup the color
         # mapped to the attr default_color_by_attr  (ie, if 'process', lookup
         # record._cdl_process and set self.default_color to that value
-        _color_by_attr_index = colors[self.default_attr_string]
+        default_attr_string = '_cdl_%s' % self.default_color_by_attr
+        _color_by_attr_index = colors[default_attr_string]
 
         name_to_color_map = {}
         for cdl_name, cdl_idx in colors.items():
