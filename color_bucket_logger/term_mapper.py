@@ -193,7 +193,7 @@ class TermColorMapper(mapper.BaseColorMapper):
                 color_idx = self.get_name_color(record_context['_cdl_xmessage'])
             else:
                 # default to empty string for non existent record attributes ('extra', etc)
-                color_idx = self.get_name_color(record_context.get('group', ''), 'sdsdf')
+                color_idx = self.get_name_color(record_context.get(group, ''), 'sdsdf')
             colors['_cdl_%s' % group] = color_idx
 
         for group, members in self.group_by:
