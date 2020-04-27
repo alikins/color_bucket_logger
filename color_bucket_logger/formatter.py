@@ -39,12 +39,14 @@ def find_format_attrs(format_string):
 
     return format_attrs
 
+
 # TODO: If there are common fields that should not default to None,
 #       add them here
 def default_attr_value(attr):
     if attr == 'stack_depth':
         return ''
     return None
+
 
 # This could just return a dict of default values instead of
 # modifying the record.
