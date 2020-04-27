@@ -107,10 +107,10 @@ class ColorFormatter(logging.Formatter):
         # self.default_attr_string = '_cdl_%s' % self.default_color_by_attr
 
         self.color_mapper = term_mapper.TermColorMapper(fmt=self._base_fmt,
-                                            default_color_by_attr=default_color_by_attr,
-                                            color_groups=self.color_groups,
-                                            format_attrs=self._style._format_attrs,
-                                            auto_color=auto_color)
+                                                        default_color_by_attr=default_color_by_attr,
+                                                        color_groups=self.color_groups,
+                                                        format_attrs=self._style._format_attrs,
+                                                        auto_color=auto_color)
 
     def __repr__(self):
         buf = '%s(fmt="%s", datefmt="%s", auto_color=%s, color_mapper.default_color_by_attr=%s)' % \
@@ -125,13 +125,10 @@ class ColorFormatter(logging.Formatter):
         '''Render time and exception info to be a string
 
         Modifies :py:class:`logging.LogRecord` record by side effect, updating asctime, exc_text attrs.'''
-        # import pprint
-        # pprint.pprint(record.__dict__)
         if self.usesTime():
             record.asctime = self.formatTime(record, self.datefmt)
 
         record.exc_text_sep = '\n'
-        # record.exc_text = ''
         if record.exc_info and not record.exc_text:
             record.exc_text = self.formatException(record.exc_info)
             record.exc_text_sep = '\n'

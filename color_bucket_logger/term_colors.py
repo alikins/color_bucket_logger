@@ -27,10 +27,10 @@ END_OF_THREAD_COLORS = 231
 NUMBER_OF_THREAD_COLORS = END_OF_THREAD_COLORS - RGB_COLOR_OFFSET
 
 BASE_COLORS = dict((color_number, color_seq) for
-                    (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
+                   (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(NUMBER_OF_BASE_COLORS)])
 # \ x 1 b [ 38 ; 5; 231m
 THREAD_COLORS = dict((color_number, color_seq) for
-                        (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
+                     (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
 
 ALL_COLORS = {}
 ALL_COLORS.update(BASE_COLORS)

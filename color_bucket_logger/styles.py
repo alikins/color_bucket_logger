@@ -29,7 +29,8 @@ class PercentStyle(object):
     attrs_pattern_str = r'(?P<full_attr>%\((?P<attr_name>.*?)\).*?[dsf])'
     attrs_pattern = re.compile(attrs_pattern_str)
 
-    named_fields_pattern = r'''(?P<full_attr>%\((?P<attr_name>.*?)\)(?P<conversion_flag>[#0+ -]*)(?P<field_width>\*|\d+)?(?P<precision>\.(\*|\d+))?(?P<conversion_type>[diouxefgcrsa%]))'''
+    named_fields_pattern = r'''(?P<full_attr>%\((?P<attr_name>.*?)\)(?P<conversion_flag>[#0+ -]*)''' + \
+        r'''(?P<field_width>\*|\d+)?(?P<precision>\.(\*|\d+))?(?P<conversion_type>[diouxefgcrsa%]))'''
 
     def __init__(self, fmt):
         self._fmt = fmt or self.default_format
@@ -135,9 +136,9 @@ class StrFormatStyle(PercentStyle):
     field_spec = re.compile(r'^(\d+|\w+)(\.\w+|\[[^]]+\])*$')
 
     uber_format_pattern = r'(?P<full_attr>{(?P<attr_name>\d+|\w+)[:]?' + \
-                        r'(?P<modifiers>(?P<align>.?[<>=^]?)(?P<sign>[+ -]?)' + \
-                        r'#?0?(?P<width>\d+|{\w+})?[,_]?(\.(\d+|{\w+}))?' + \
-                        r'(?P<conversion_type>[bcdefgnosx%])?)})'
+        r'(?P<modifiers>(?P<align>.?[<>=^]?)(?P<sign>[+ -]?)' + \
+        r'#?0?(?P<width>\d+|{\w+})?[,_]?(\.(\d+|{\w+}))?' + \
+        r'(?P<conversion_type>[bcdefgnosx%])?)})'
 
     def find_format_attrs(self, format_string):
         attrs_pattern = re.compile(self.uber_format_pattern)
