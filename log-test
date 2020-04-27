@@ -30,7 +30,14 @@ class DefaultAttrFilter(object):
         self.attrs = attrs
 
     def filter(self, record):
-        color_bucket_logger.add_default_record_attrs(record, self.attrs)
+        record_context = {}
+        record_context = color_bucket_logger.get_default_record_attrs(record_context,
+                                                                      self.attrs)
+        # update log record in place
+        for attr_name in record_context:
+            if not hasattr(record, attr_name):
+                setattr(record, attr_name, record_context[attr_name])
+
         return True
 
 
