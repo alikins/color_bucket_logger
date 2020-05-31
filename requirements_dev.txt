@@ -1,6 +1,6 @@
 Sphinx
 PyYAML
-bumpversion
+bump2version
 coverage
 flake8 >=3.8.0
 logging_tree
