@@ -210,7 +210,7 @@ def test_get_thread_color():
 
     # log some stuff from a thread
     some_thread = threading.Thread(target=log_from_thread,
-                            args=('msg from some thread #%s' % '1SomeThread',))
+                                   args=('msg from some thread #%s' % '1SomeThread',))
     some_thread.daemon = True
     some_thread.start()
 
@@ -275,7 +275,7 @@ def test_created_time():
     for logged_item in handler.buf:
         testlog.debug('logged_item: %s', logged_item)
         assert 'created=' in logged_item
-        assert 'rel='in logged_item
+        assert 'rel=' in logged_item
 
 
 def test_extra_attrs():
@@ -288,7 +288,8 @@ def test_extra_attrs():
     for logged_item in handler.buf:
         testlog.debug('logged_item: %s', logged_item)
         assert 'an_extra=' in logged_item
-        assert 'eggggstra'in logged_item
+        assert 'eggggstra' in logged_item
+
 
 @pytest.fixture(params=[color_bucket_logger.ColorFormatter,
                         color_bucket_logger.TermFormatter])
@@ -297,6 +298,7 @@ def formatter_class(request):
     return request.param
 
 
+# TODO: add a log fmt "style" pytest fixture to test %s and {} style fmt string styles
 def test_stuff(formatter_class):
     teardown_config()
     logging_tree.printout()
