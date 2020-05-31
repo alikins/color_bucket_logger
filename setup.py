@@ -27,7 +27,7 @@ test_requirements = [
 
 setup(
     name='color_bucket_logger',
-    version='0.1.0',
+    version='0.2.0',
     description="Logging Formatter for colorizing logs per thread, process, logger name, or any record attribute",
     long_description=readme + '\n\n' + history,
     author="Adrian Likins",
