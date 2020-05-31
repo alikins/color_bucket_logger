@@ -41,6 +41,7 @@ import color_bucket_logger # noqa
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.napoleon',
               'sphinx.ext.intersphinx',
@@ -87,6 +88,17 @@ release = color_bucket_logger.__version__
 # directories to ignore when looking for source files.
 exclude_patterns = ['_build']
 
+# napoleon uses .. attribute by default, but :ivar: is more succinct and looks better,
+# particularly on classes with a lot of attributes, like django models and related objects
+napoleon_use_ivar = True
+
+# Set autodoc default options
+# Document all module/class/etc members, even if they have no docstring.
+# Show class inheritance, and group class members together by type (attr, method, etc)
+autodoc_default_flags = ['members', 'undoc-members']
+autodoc_member_order = 'groupwise'
+autoclass_content = 'both'
+
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #default_role = None
@@ -120,7 +132,8 @@ pygments_style = 'sphinx'
 # html_theme = 'default'
 # html_theme = 'scrolls'
 # html_theme = 'agogo'
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = "default"
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
