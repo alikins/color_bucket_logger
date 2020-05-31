@@ -63,12 +63,14 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/color_bucket_logger.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc --module-first --output-dir docs/ color_bucket_logger
+docs-api:
+	sphinx-apidoc --ext-autodoc --module-first --implicit-namespaces --force --separate --output-dir docs/ color_bucket_logger
+
+docs: ## generate Sphinx HTML documentation
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
+
+docs-browser: docs
 	$(BROWSER) docs/_build/html/index.html
 
 servedocs: docs ## compile the docs watching for changes
@@ -79,8 +81,7 @@ release: clean ## package and upload a release
 	python setup.py bdist_wheel upload
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python setup.py sdist bdist_wheel
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
