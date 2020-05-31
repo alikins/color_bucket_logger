@@ -9,8 +9,8 @@ color_bucket_logger
 .. image:: https://img.shields.io/travis/alikins/color_bucket_logger.svg
         :target: https://travis-ci.org/alikins/color_bucket_logger
 
-.. image:: https://readthedocs.org/projects/color-debug/badge/?version=latest
-        :target: https://color-debug.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/color-bucket-logger/badge/?version=latest
+        :target: https://color-bucket-logger.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 .. image:: https://pyup.io/repos/github/alikins/color_bucket_logger/shield.svg
