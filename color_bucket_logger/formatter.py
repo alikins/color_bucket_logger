@@ -69,13 +69,6 @@ def get_default_record_attrs(record_context, attr_list):
 class ColorFormatter(logging.Formatter):
     """Base color bucket formatter"""
 
-    # A little weird...
-    # @property
-    # def color_fmt(self):
-    #    if not self._color_fmt:
-    #        self._color_fmt = context_color_format_string(self._base_fmt, self._format_attrs)
-    #    return self._color_fmt
-
     def __init__(self, fmt=None, default_color_by_attr=None,
                  color_groups=None, auto_color=False, datefmt=None, style=None):
         fmt = fmt or DEFAULT_FORMAT
@@ -97,9 +90,6 @@ class ColorFormatter(logging.Formatter):
         self._base_fmt = fmt
 
         self.color_groups = color_groups or []
-
-        # self._color_fmt = None
-        # self._format_attrs = find_format_attrs(self._base_fmt)
 
         # TODO: be able to set the default color by attr name. Ie, make a record default to the thread or processName
         # self.default_color_by_attr = default_color_by_attr or 'process'
@@ -177,12 +167,6 @@ class ColorFormatter(logging.Formatter):
             # so duplicate here
             record.exc_text = None
         return s
-
-    # Note that self._format here is more or less the same as py3's Formatter.formatMessage()
-    # and self.color_fmt is similar to py3's Formatter._style, but neither are used here
-    # for py2 compat.
-    # def _format(self, record_context):
-    #    return self.color_fmt % record_context
 
 
 class TermFormatter(ColorFormatter):
