@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+
+import asyncio
+import logging
+import os
+import sys
+import time
+
+from gen_log_entries import log_setup, show_setup
+
+try:
+    import backoff
+except ImportError:
+    print("The asyncio example requires the 'backoff' package to be installed")
+    sys.exit(1)
+
+CONFIG = 'asyncio.yml'
+
+log_config_file = os.path.join(os.path.dirname(__file__), CONFIG)
+
+clog = logging.getLogger('cbl_ex_asyncio')
+blog = logging.getLogger('cbl_blog')
+
+
+def log_blip(extra=None):
+    blog.info('b', extra=extra)
+
+
+def log_fail(extra=None):
+    clog.debug('d', extra=extra)
+
+    def fail():
+        42 / 0
+
+    fail()
+
+
+@backoff.on_predicate(backoff.constant, max_time=1, interval=0.25)
+async def log_stuff(name, extra=None):
+    extra = extra or {}
+    return log_blip(extra=extra)
+
+
+@backoff.on_predicate(backoff.constant, max_time=1, interval=0.25)
+async def slow_log(name):
+    await asyncio.sleep(0.02)
+    clog.debug('slow_log1 %s', name)
+
+    # block, to force the asyncio 'debug' log to log about the
+    # slow method
+    time.sleep(0.5)
+    clog.debug('slow_log2 %s', name)
+    return False
+
+
+async def factorial(name, number):
+    f = 1
+    for i in range(2, number + 1):
+        # print(f"Task {name}: Compute factorial({i})...")
+        clog.info("Task %s: Compute factorial(%s)...", name, i)
+        await asyncio.sleep(0.3)
+        f *= i
+    # print(f"Task {name}: factorial({number}) = {f}")
+    clog.info("Task %s: factorial(%s) = %s", name, number, f)
+
+
+@backoff.on_predicate(backoff.constant, max_time=1.0, interval=0.5)
+async def double(name, number):
+    clog.info('Task %s: double(%s)...', name, number)
+    await asyncio.sleep(0.2)
+    result = 2 * number
+    clog.info('Task %s: result=%s', name, result)
+    return result
+
+
+def task_id():
+    tsk_id = 0
+    while True:
+        yield tsk_id
+        tsk_id += 1
+
+
+async def main():
+    loop = asyncio.get_running_loop()
+    clog.info('Loop: %s', loop)
+    loop.slow_callback_duration = 0.1
+
+    task_ids = task_id()
+
+    await double(next(task_ids), 5)
+    await double(next(task_ids), 6)
+
+    tasks = []
+    for job_id in range(5):
+        tid = next(task_ids)
+        task = asyncio.create_task(double(tid,
+                                          tid * 10))
+        tasks.append(task)
+
+        task2 = asyncio.create_task(log_stuff(next(task_ids)))
+        tasks.append(task2)
+
+        task3 = asyncio.create_task(slow_log(next(task_ids)))
+        tasks.append(task3)
+
+    for task in tasks:
+        await task
+
+    # Schedule three calls *concurrently*:
+    await asyncio.gather(
+        factorial(next(task_ids), 2),
+        factorial(next(task_ids), 3),
+        factorial(next(task_ids), 4),
+    )
+
+
+if __name__ == '__main__':
+
+    log_setup(log_config_file)
+    show_setup()
+
+    asyncio.run(main(), debug=True)

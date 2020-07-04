@@ -1,0 +1,44 @@
+---
+disable_existing_loggers: false
+filters: {}
+formatters:
+  color_verbose:
+    (): color_bucket_logger.ColorFormatter
+    format: '%(relativeCreated)04d %(levelname)-1.1s %(name)14.14s %(funcName)12.12s:%(lineno)-3d| %(message)s'
+    # Make the default color of the message correspond to the logger name
+    default_color_by_attr: 'name'
+
+    # Automatically choose color buckets for other fields based on their values.
+    # Each log record field will colorize itself, except for the color buckets grouped
+    # together via color_groups.
+    auto_color: false
+
+    # If there are fields that should share the same color bucket, 'color_groups'
+    # defines which field's color is used. Each entry is a list or tuple, the first
+    # item is the field name used to choose the color, the second field is a list of
+    # fieldnames that will use that color.
+    #
+    # For example, to let 'process' and 'processName' fields use the 'process' color,
+    # a color groups entry: "['process', ['processName']]'
+    color_groups:
+      - ['process', ['processName']]
+      - ['levelname', ['levelname']]
+      - ['thread', ['threadName']]
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: color_verbose
+    level: DEBUG
+    stream: ext://sys.stderr
+loggers:
+  "":
+    level: DEBUG
+    handlers:
+      - console
+  cbl_asyncio:
+    level: DEBUG
+  asyncio:
+    level: DEBUG
+  backoff:
+    level: DEBUG
+version: 1
