@@ -1,3 +1,30 @@
+'''256 color terminal handling
+
+ALL_COLORS is a dict mapping color indexes to the ANSI escape code.
+ALL_COLORS is essentially a "palette".
+
+Note that ALL_COLORS is a dict that (mostly) uses integers as the keys.
+Yeah, that is weird. In theory, the keys could also be other identifiers,
+although that isn't used much at the moment. So, yeah, could/should just
+be a list/array.
+
+Also note that the ordering of the color indexes is fairly arbitrary.
+It mostly follows the order of the ANSI escape codes. But it is
+important to note that the order doesn't mean much. For example,
+the colors for index 154 and 155 may or may not be related in any way.
+
+This module also defines some convience names for common keys of
+ALL_COLORS.
+
+The first 8 terminal colors:
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
+
+The terminal reset index:
+    RESET_SEQ_INDEX
+
+The default color index:
+    DEFAULT_COLOR_IDX
+'''
 
 # hacky ansi color stuff
 RESET_SEQ = "\033[0m"
@@ -5,6 +32,10 @@ COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 
 NUMBER_OF_BASE_COLORS = 8
+
+ALL_COLORS = {}
+
+# See https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
 
 #: Used to determine what color index we start from.
 #:
@@ -32,7 +63,6 @@ BASE_COLORS = dict((color_number, color_seq) for
 THREAD_COLORS = dict((color_number, color_seq) for
                      (color_number, color_seq) in [(x, "\033[38;5;%dm" % x) for x in range(START_OF_THREAD_COLORS, END_OF_THREAD_COLORS)])
 
-ALL_COLORS = {}
 ALL_COLORS.update(BASE_COLORS)
 ALL_COLORS.update(THREAD_COLORS)
 
