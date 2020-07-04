@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+
+import logging
+import os
+import time
+
+from multiprocessing import Pool, get_logger
+
+from gen_log_entries import gen_log_events, log_setup, show_setup
+
+CONFIG = 'multiprocessing.yml'
+
+log_config_file = os.path.join(os.path.dirname(__file__), CONFIG)
+
+clog = logging.getLogger('cbl_mp')
+
+PRIMES = [3, 5, 7, 11, 13, 17, 23, 29]
+
+
+def log_blip(message, extra=None):
+    extra = extra or {}
+    clog.info('b %s', message, extra=extra)
+
+
+def log_sleep(message, prime):
+    clog.debug('message: %s prime: %s', message, prime)
+    time.sleep(prime * 0.05)
+    clog.info('s %s', message)
+    # clog.debug('s %s', message)
+    # clog.warning('s %s', message)
+    # clog.error('s %s', message)
+    # clog.critical('s %s', message)
+    return "ttt %s" % prime
+
+
+def log_fail(message, prime):
+    clog.debug('message: %s prime: %s', message, prime)
+    time.sleep(prime * 0.05)
+    # clog.info('d %s', message)
+    clog.debug('d %s', message)
+    # clog.warning('d %s', message)
+    # clog.error('d %s', message)
+    # clog.critical('d %s', message)
+
+    def fail():
+        42 / 0
+
+    fail()
+
+
+def async_cb(result):
+    clog.info('async_result: %s', result)
+
+
+def async_error_cb(exception):
+    clog.exception(exception)
+    clog.error('type(exc): %s', type(exception))
+
+
+if __name__ == '__main__':
+
+    log_setup(log_config_file)
+    show_setup()
+
+    mplog = get_logger()
+    # mplog.setLevel(logging.DEBUG)
+
+    number_of_tasks = 20
+    chunksize = 1
+    messages = ['This is message %s' % x for x in range(number_of_tasks)]
+
+    messages2 = [('other stuff %s' % z, {'msg_id': z}) for z in range(number_of_tasks)]
+
+    async_messages = [('message1 %s' % y, y) for y in PRIMES]
+    async_messages2 = [('message2 %s' % y, y) for y in PRIMES]
+    async_messages3 = [('message3 %s' % y, y) for y in PRIMES]
+    async_messages4 = [('fail4 %s' % y, y) for y in PRIMES]
+
+    mplog.info('About to start pool')
+    with Pool(processes=4, maxtasksperchild=4) as p:
+        # p.map_async(gen_log_events, messages, chunksize,
+        #            callback=async_cb,
+        #            error_callback=async_error_cb)
+
+        # p.starmap(log_blip, messages2)
+
+        p.starmap_async(log_blip,
+                        # async_messages,
+                        messages2,
+                        chunksize,
+                        callback=async_cb,
+                        error_callback=async_error_cb)
+
+        p.starmap_async(log_sleep,
+                        async_messages2,
+                        callback=async_cb,
+                        error_callback=async_error_cb)
+
+        p.starmap_async(log_sleep,
+                        async_messages3,
+                        callback=async_cb,
+                        error_callback=async_error_cb)
+
+        p.starmap_async(log_fail,
+                    async_messages4,
+                    callback=async_cb,
+                    error_callback=async_error_cb)
+
+        results = p.starmap_async(log_sleep,
+                                  async_messages,
+                                  callback=async_cb,
+                                  error_callback=async_error_cb)
+
+        p.close()
+
+        for result in results.get():
+            clog.info('async_result.get(): %s', result)
+
+        p.join()

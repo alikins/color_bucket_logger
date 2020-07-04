@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.config
+import multiprocessing
 import os
 import signal
 import threading
@@ -12,6 +13,7 @@ import yaml
 flog = logging.getLogger('foo')
 blog = logging.getLogger('bar')
 blog.setLevel(logging.DEBUG)
+mplog = multiprocessing.get_logger()
 
 LOGGING_TREE = False
 try:
@@ -101,6 +103,9 @@ def gen_log_events(thread_msg=None, throw_exc=False, stop_event=None):
 
     log_more_stuff(extra=extra)
 
+    mplog.info('A message from multiprocessing')
+
+    flog.debug('The mp logger is %s', mplog)
     # Generate log messages that reference the thread we expect it to come from
     log_thread_msg(thread_msg, extra=extra)
 
