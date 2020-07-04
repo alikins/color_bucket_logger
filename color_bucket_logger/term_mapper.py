@@ -60,7 +60,7 @@ class TermColorMapper(mapper.BaseColorMapper):
     def get_level_color(self, levelname, levelno):
         level_color = self.LEVEL_COLORS.get(levelname, None)
         if not level_color:
-            level_color = self.LEVEL_COLORS.get(levelno, self.default_color)
+            level_color = self.LEVEL_COLORS.get(levelno, self.get_name_color(levelname))
         return level_color
 
     def get_process_colors(self, record_context):
