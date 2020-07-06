@@ -4,9 +4,9 @@ filters: {}
 formatters:
   color_verbose:
     (): color_bucket_logger.ColorFormatter
-    format: '%(relativeCreated)04d  %(levelname)-1.1s %(name)14.14s %(funcName)12.12s:%(lineno)-3d| %(message)s'
+    format: '%(relativeCreated)04d %(processName)16.16s %(process)05d %(threadName)10.10s %(levelname)-7.7s %(name)10.10s %(funcName)12.12s:%(lineno)-3d| %(message)s'
     # Make the default color of the message correspond to the logger name
-    default_color_by_attr: 'name'
+    default_color_by_attr: 'process'
 
     # Automatically choose color buckets for other fields based on their values.
     # Each log record field will colorize itself, except for the color buckets grouped
@@ -35,10 +35,13 @@ loggers:
     level: DEBUG
     handlers:
       - console
-  cbl_asyncio:
+  cbl_ql:
     level: DEBUG
-  asyncio:
-    level: DEBUG
-  backoff:
-    level: DEBUG
+    handlers:
+      - console
+  multiprocessing:
+    #level: ext://multiprocessing.util.SUBDEBUG
+    level: INFO
+    handlers:
+      - console
 version: 1

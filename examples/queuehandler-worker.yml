@@ -1,0 +1,11 @@
+---
+disable_existing_loggers: true
+handlers:
+  console:
+    class: logging.handlers.QueueHandler
+loggers:
+  "":
+    level: DEBUG
+    handlers:
+      - queue_handler
+version: 1

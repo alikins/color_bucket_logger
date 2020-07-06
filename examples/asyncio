@@ -69,7 +69,8 @@ async def double(name, number):
     clog.info('Task %s: double(%s)...', name, number)
     await asyncio.sleep(0.2)
     result = 2 * number
-    clog.info('Task %s: result=%s', name, result)
+    task = asyncio.current_task()
+    clog.info('Task %s: result=%s asyncio.task_id=%s', name, result, task)
     return result
 
 

@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+import logging
+import logging.handlers
+import os
+import time
+
+import logging_tree
+import yaml
+
+from multiprocessing import Pool, get_logger, Queue, Event, Process, Manager
+
+from gen_log_entries import gen_log_events, log_setup, show_setup
+
+CONFIG = 'queuehandler.yml'
+
+log_config_file = os.path.join(os.path.dirname(__file__), CONFIG)
+
+clog = logging.getLogger('cbl_qh')
+
+
+def log_blip(message, extra=None):
+    extra = extra or {}
+    clog.info('b %s', message, extra=extra)
+
+
+def log_sleep(message, prime):
+    clog.debug('message: %s prime: %s', message, prime)
+    time.sleep(prime * 0.05)
+    clog.info('s %s', message)
+    return "ttt %s" % prime
+
+
+def log_fail(message, prime):
+    clog.debug('message: %s prime: %s', message, prime)
+    time.sleep(prime * 0.05)
+    clog.debug('d %s', message)
+
+    def fail():
+        42 / 0
+
+    fail()
+
+
+def async_cb(result):
+    clog.info('async_result: %s', result)
+
+
+def async_error_cb(exception):
+    clog.exception(exception)
+    clog.error('type(exc): %s', type(exception))
+    raise exception
+
+
+def listener_process(mp_queue, stop_event):
+    # CONFIG = 'queuehandler-listener.yml'
+
+    # listener_log_config_file = os.path.join(os.path.dirname(__file__), CONFIG)
+
+    # with open(listener_log_config_file, 'r') as log_config_fd:
+    #    log_config = yaml.safe_load(log_config_fd)
+
+    # logging.config.dictConfig(log_config)
+
+    # show_setup()
+    # clog.debug('listener logging_tree.format.build_description():\n%s',
+    #               logging_tree.format.build_description())
+    cbl_ql_logger = logging.getLogger('cbl_ql')
+
+    clog.debug('cbl_ql_logger.handlers: %s', cbl_ql_logger.handlers)
+
+    listener = logging.handlers.QueueListener(mp_queue, *cbl_ql_logger.handlers)
+    clog.debug('About to start listener')
+
+    listener.start()
+    clog.debug('Listener started')
+    stop_event.wait()
+    clog.debug('About to stop listener')
+    listener.stop()
+
+
+def worker_process(message, mp_queue):
+    root_log = logging.getLogger()
+    root_log.setLevel(logging.DEBUG)
+    handler = logging.handlers.QueueHandler(mp_queue)
+    root_log.addHandler(handler)
+    clog.debug('worker root_logger message: %s', message)
+
+    for i in range(5):
+        logger = logging.getLogger('cbl_ql')
+        logger.debug('%s %d', message, i)
+        time.sleep(0.1)
+
+
+if __name__ == '__main__':
+
+    log_setup(log_config_file)
+    # show_setup()
+
+    # mplog = get_logger()
+    # mplog.setLevel(logging.DEBUG)
+
+    number_of_tasks = 5
+    chunksize = 1
+
+    m = Manager()
+    mp_queue = m.Queue()
+
+    stop_event = Event()
+    lp = Process(target=listener_process, name='listener',
+                 args=(mp_queue, stop_event))
+    lp.start()
+
+    messages2 = [('other stuff %s' % z, mp_queue) for z in range(number_of_tasks)]
+
+    with Pool(processes=4, maxtasksperchild=4) as p:
+
+        p.starmap_async(worker_process,
+                        messages2,
+                        chunksize,
+                        callback=async_cb,
+                        error_callback=async_error_cb)
+
+        p.close()
+
+        p.join()
+
+    stop_event.set()
